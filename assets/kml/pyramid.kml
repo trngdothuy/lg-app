@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+        <name>Pyramid in Barcelona</name>
+        <description>A 3D red pyramid</description>
+        
+        <Style id="style">
+            <PolyStyle>
+                <color>cc0000ff</color>
+                <fill>1</fill>
+                <outline>1</outline>
+            </PolyStyle>
+            <LineStyle>
+                <color>ff000088</color>
+                <width>1</width>
+            </LineStyle>
+        </Style>
+
+        <Placemark>
+            <styleUrl>#style</styleUrl>
+
+            <MultiGeometry>
+            
+                <!-- Base -->
+                <Polygon>
+                    <altitudeMode>clampToGround</altitudeMode>
+                    <outerBoundaryIs>
+                        <LinearRing>
+                            <coordinates>
+                                2.16955,41.38745,0
+                                2.17045,41.38745,0
+                                2.17045,41.38655,0
+                                2.16955,41.38655,0
+                                2.16955,41.38745,0
+                            </coordinates>
+                        </LinearRing>
+                    </outerBoundaryIs>
+                </Polygon>
+
+                <!-- 1st face -->
+                <Polygon>
+                    <altitudeMode>absolute</altitudeMode>
+                    <outerBoundaryIs>
+                        <LinearRing>
+                            <coordinates>
+                                2.16955,41.38745,0
+                                2.17045,41.38745,0
+                                2.17000,41.38700,80
+                                2.16955,41.38745,0
+                            </coordinates>
+                        </LinearRing>
+                    </outerBoundaryIs>
+                </Polygon>
+
+  
+                <!-- 2nd face -->
+                <Polygon>
+                    <altitudeMode>absolute</altitudeMode>
+                    <outerBoundaryIs>
+                        <LinearRing>
+                            <coordinates>
+                                2.17045,41.38745,0
+                                2.17045,41.38655,0
+                                2.17000,41.38700,80
+                                2.17045,41.38745,0
+                            </coordinates>
+                        </LinearRing>
+                    </outerBoundaryIs>
+                </Polygon>
+                
+                
+                <!-- 3rd face -->
+                <Polygon>
+                    <altitudeMode>absolute</altitudeMode>
+                    <outerBoundaryIs>
+                        <LinearRing>
+                            <coordinates>
+                                2.17045,41.38655,0
+                                2.16955,41.38655,0
+                                2.17000,41.38700,80
+                                2.17045,41.38655,0
+                            </coordinates>
+                        </LinearRing>
+                    </outerBoundaryIs>
+                </Polygon>
+
+                <!-- 4th face -->
+                <Polygon>
+                    <altitudeMode>absolute</altitudeMode>
+                    <outerBoundaryIs>
+                        <LinearRing>
+                            <coordinates>
+                                2.16955,41.38655,0
+                                2.16955,41.38745,0
+                                2.17000,41.38700,80
+                                2.16955,41.38655,0
+                            </coordinates>
+                        </LinearRing>
+                    </outerBoundaryIs>
+                </Polygon>
+            </MultiGeometry>
+        </Placemark>
+
+    </Document>
+</kml>
