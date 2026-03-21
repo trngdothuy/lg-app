@@ -89,14 +89,21 @@ class _ControlsScreenState extends State<ControlsScreen> {
     // send pyramid
     Future<void> _sendPyramid() async {
         setState(() => _status = 'Loading KML...');
+
         final String kmlContent =  await rootBundle.loadString('assets/kml/pyramid.kml');
-        final escaped = kmlContent.replaceAll("'", "'\\''");
+        final String base64KML = base64Encode(utf8.encode(kmlContent));
+
         await _sendCommand(
-            "echo '$escaped' > var/www/html/kml/pyramid.kml"
+            "echo '$base64KML' | base64 -d > /var/www/html/kml/pyramid.kml"
         );
-        await _sendCommand(
-            "echo 'http://lg1:81/kml/pyramid.kml' > /var/www/hmtl/kmls/kmls.txt"
+
+        for (int i = 1; i <= widget.screens; i++) {
+            await _sendCommand(
+            "ssh -o StrictHostKeyChecking=no lg$i@lg$i 'echo \"http://lg1:81/kml/pyramid.kml\" > /tmp/query.txt'"
         );
+        }
+        
+        setState(() => _status = 'Pyramid loaded');
     }
 
     @override Widget build(BuildContext context) {
@@ -127,6 +134,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
 
                         _button('Send LG Logo', Colors.indigo, _sendLogo),
                         const SizedBox(height: 12),
+                        _button('Send 3D Pyramid', Colors.indigo, _sendPyramid),
                     ],
                 ),
             ),
