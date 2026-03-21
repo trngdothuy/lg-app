@@ -33,6 +33,23 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       _errorMessage = '';
     });
 
+    // fake connection for testing
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isConnecting = false);
+    if (mounted) {
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(
+          builder: (_) => ControlsScreen(
+            client: null,
+            host: host, 
+            screens: screens,
+            ),
+          ),
+        );
+    }
+    return;
+
     try {
       // open SSH connection
       final socket = await SSHSocket.connect(host, port);
