@@ -12,7 +12,7 @@ class ConnectionScreen extends StatefulWidget {
 class _ConnectionScreenState extends State<ConnectionScreen> {
 
   final _userController = TextEditingController(text: 'lg1');
-  final _hostController = TextEditingController(text: '192.168.56.105');
+  final _hostController = TextEditingController(text: '192.168.56.101');
   final _portController = TextEditingController(text: '22');
   final _passwordController = TextEditingController(text: 'lg');
   final _screensController = TextEditingController(text: '3');
@@ -34,21 +34,21 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     });
 
     // fake connection for testing
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isConnecting = false);
-    if (mounted) {
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(
-          builder: (_) => ControlsScreen(
-            client: null,
-            host: host, 
-            screens: screens,
-            ),
-          ),
-        );
-    }
-    return;
+    // await Future.delayed(const Duration(seconds: 2));
+    // setState(() => _isConnecting = false);
+    // if (mounted) {
+    //   Navigator.pushReplacement(
+    //     context, 
+    //     MaterialPageRoute(
+    //       builder: (_) => ControlsScreen(
+    //         client: null,
+    //         host: host, 
+    //         screens: screens,
+    //         ),
+    //       ),
+    //     );
+    // }
+    // return;
 
     try {
       // open SSH connection

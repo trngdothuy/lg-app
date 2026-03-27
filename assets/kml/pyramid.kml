@@ -3,7 +3,8 @@
     <Document>
         <name>Pyramid in Barcelona</name>
         <description>A 3D red pyramid</description>
-        
+        <gx:duration>0.5</gx:duration>
+		<gx:flyToMode>smooth</gx:flyToMode>
         <LookAt>
             <longitude>2.1734</longitude>
             <latitude>41.3851</latitude>

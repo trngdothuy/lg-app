@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'dart:convert';
+import 'dart:typed_data';
 
 class ControlsScreen extends StatefulWidget {
     final SSHClient? client;
@@ -20,7 +21,6 @@ class ControlsScreen extends StatefulWidget {
 
 class _ControlsScreenState extends State<ControlsScreen> {
 
-    // helper to time out connection if left idle for more than 22s
     String _status = 'Ready';
 
     Future<void> _sendCommand(String command) async {
@@ -30,10 +30,10 @@ class _ControlsScreenState extends State<ControlsScreen> {
         try {
             print('Connecting to ${widget.host}:22');
             final socket = await SSHSocket.connect(widget.host, 22);
-            
+
             print('Socket open, authenticating..');
             final client = SSHClient(
-                socket, 
+                socket,
                 username: 'lg1',
                 onPasswordRequest: () => 'lg',
                 );
@@ -52,8 +52,28 @@ class _ControlsScreenState extends State<ControlsScreen> {
         }
     }
 
+    // refresh
+    Future<void> _setRefresh() async {
+    for (var i = 2; i <= widget.screens; i++) {
+      String search =
+          '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href>';
+      String replace =
+          '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href><refreshMode>onInterval<\\/refreshMode><refreshInterval>2<\\/refreshInterval>';
+
+      // add refresh mode to slave myplaces.kml
+      await _sendCommand(
+        'sshpass -p lg ssh -t lg$i@lg$i \'echo lg | sudo -S sed -i "s/$replace/$search/" ~/earth/kml/slave/myplaces.kml\''
+      );
+      await _sendCommand(
+        'sshpass -p lg ssh -t lg$i@lg$i \'echo lg | sudo -S sed -i "s/$search/$replace/" ~/earth/kml/slave/myplaces.kml\''
+      );
+      print("Refresh successfully");
+    }
+  }
+
     // send logo
     Future<void> _sendLogo() async {
+      setState(() => _status = 'Uploading logo');
         final int leftScreen = widget.screens;
 
         // read logo as raw bytes
@@ -80,30 +100,95 @@ class _ControlsScreenState extends State<ControlsScreen> {
         </Document>
     </kml>''';
 
-    final escaped = kml.replaceAll("'", "'\\''");
+    final String base64KML = base64Encode(utf8.encode(kml));
     await _sendCommand(
-        "echo '$escaped' > /var/www/html/kml/slave_$leftScreen.kml"
+        "echo '$base64KML' | base64 -d > /var/www/html/kml/slave_$leftScreen.kml"
     );
+    await _setRefresh();
+    setState(() => _status = 'Logo sent');
     }
 
     // send pyramid
     Future<void> _sendPyramid() async {
-        setState(() => _status = 'Loading KML...');
-
+        setState(() => _status = 'Loading Pyramid KML...');
         final String kmlContent =  await rootBundle.loadString('assets/kml/pyramid.kml');
-        final String base64KML = base64Encode(utf8.encode(kmlContent));
 
+        // upload via base64
+        final String base64KML = base64Encode(utf8.encode(kmlContent));
         await _sendCommand(
             "echo '$base64KML' | base64 -d > /var/www/html/kml/pyramid.kml"
         );
 
+        // write to kmls.txt so network link picks it up
+        await _sendCommand(
+          "echo 'http://lg1:81/kml/pyramid.kml' > /var/www/html/kmls.txt"
+        );
+
         for (int i = 1; i <= widget.screens; i++) {
             await _sendCommand(
-            "ssh -o StrictHostKeyChecking=no lg$i@lg$i 'echo \"http://lg1:81/kml/pyramid.kml\" > /tmp/query.txt'"
+            "ssh -o StrictHostKeyChecking=no lg$i@lg$i "
+            " 'echo \"http://lg1:81/kml/pyramid.kml\" > /tmp/query.txt'"
         );
         }
-        
+
+        await _setRefresh();
         setState(() => _status = 'Pyramid loaded');
+    }
+
+    // fly-to
+    Future<void> _flyTo() async {
+
+      setState(() => _status = 'Loading Fly To KML...');
+      print("Loading Fly To KML...");
+
+      final String flyKml =  await rootBundle.loadString('assets/kml/flyTo.kml');
+      final String base64KML = base64Encode(utf8.encode(flyKml));
+      await _sendCommand(
+          "echo '$base64KML' | base64 -d > /var/www/html/kml/flyTo.kml"
+      );
+      print("Uploaded via base64");
+
+      // write to kmls.txt so network link picks it up
+      await _sendCommand(
+          "echo 'http://lg1:81/kml/flyTo.kml' > /var/www/html/kmls.txt"
+        );
+      print("Wrote to kmls.txt");
+
+      for (int i = 1; i <= widget.screens; i++) {
+          await _sendCommand(
+          "ssh -o StrictHostKeyChecking=no lg$i@lg$i "
+          " 'echo \"http://lg1:81/kml/flyTo.kml\" > /tmp/query.txt'"
+      );
+      }
+      print("Wrote to /tmp/query.txt");
+
+      await _setRefresh();
+      setState(() => _status = 'Flying to Hanoi');
+    }
+
+    Future<void> _clearLogos() async {
+      final int leftScreen = widget.screens;
+      final String empty = '''<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document></Document>
+      </kml>''';
+      final String base64Empty = base64Encode(utf8.encode(empty));
+      await _sendCommand( "echo '$base64Empty' | base64 -d > /var/www/html/kml/slave_$leftScreen.kml" );
+      await _setRefresh();
+      setState(() => _status = 'Logos cleared');
+    }
+
+    Future<void> _clearKMLs() async {
+      final String empty = '''<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document></Document>
+      </kml>''';
+      final String base64Empty = base64Encode(utf8.encode(empty));
+      await _sendCommand( "echo '$base64Empty' | base64 -d > /var/www/html/kml/pyramid.kml" );
+
+      // await _sendCommand( "rm -f /var/www/html/kml/pyramid.kml" );
+      await _setRefresh();
+      setState(() => _status = 'KMLs cleared');
     }
 
     @override Widget build(BuildContext context) {
@@ -134,7 +219,13 @@ class _ControlsScreenState extends State<ControlsScreen> {
 
                         _button('Send LG Logo', Colors.indigo, _sendLogo),
                         const SizedBox(height: 12),
-                        _button('Send 3D Pyramid', Colors.indigo, _sendPyramid),
+                        _button('Send 3D Pyramid', Colors.deepOrange, _sendPyramid),
+                        const SizedBox(height: 12),
+                        _button('Fly to Hanoi', Colors.teal, _flyTo),
+                         const SizedBox(height: 12),
+                        _button('Clear Logos', Colors.grey, _clearLogos),
+                         const SizedBox(height: 12),
+                        _button('Clear KMLs', Colors.blueGrey, _clearKMLs),
                     ],
                 ),
             ),
@@ -144,7 +235,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
     // reusable button widget
     Widget _button(String label, Color color, VoidCallback onPressed) {
         return ElevatedButton(
-            onPressed: onPressed, 
+            onPressed: onPressed,
             style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.white,
