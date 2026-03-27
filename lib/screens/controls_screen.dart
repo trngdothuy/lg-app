@@ -24,6 +24,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
 
     String _status = 'Ready';
 
+    // tts
     FlutterTts flutterTts = FlutterTts();
     bool _isMuted = false;
 
@@ -40,8 +41,38 @@ class _ControlsScreenState extends State<ControlsScreen> {
       });
     }
 
+    // mal input demo
+    final TextEditingController _inputController = TextEditingController();
+    String _commandOutput = '';
+    
+    bool _isValidInput(String input) {
+      final regex = RegExp(r'^[0-9\.\-,\s]+$'); // only digit, dot, hyphen, comma or whitespace allowed
+      return regex.hasMatch(input);
+    }
+
+    void _handleCustomCommand() {
+      String input = _inputController.text;
+
+      if(!_isValidInput(input)) {
+        setState(() {
+          _commandOutput = "Invalid input detected. Command rejected";
+        });
+        return;
+      }
+
+      String command = "fly_to($input)";
+
+      setState(() {
+        _commandOutput = "Executing: $command";
+      });
+
+      print(command);
+
+      // only for demo
+    }
+
     Future<void> _sendCommand(String command) async {
-        setState(() => _status = 'Sending...');
+        setState(() => _status = 'Sending $command');
         print('Running command: $command');
 
         try {
@@ -252,8 +283,33 @@ class _ControlsScreenState extends State<ControlsScreen> {
                         _button('Clear Logos', Colors.grey, _clearLogos),
                          const SizedBox(height: 12),
                         _button('Clear KMLs', Colors.blueGrey, _clearKMLs),
+
                         const SizedBox(height: 12),
                         _button(_isMuted? 'Unmuted' : 'Mute', Colors.black, _toggleMute),
+
+                        const SizedBox(height: 32),
+
+                        TextField(
+                          controller: _inputController,
+                          decoration: InputDecoration(
+                            labelText: "Enter coordinates (lat, lng)",
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        ElevatedButton(
+                          onPressed: _handleCustomCommand,
+                          child: Text("Send Custom Fly Command"),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        Text(
+                          _commandOutput,
+                          style: const TextStyle(fontFamily: 'monospace'),
+                        ),
                     ],
                 ),
             ),
