@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class ControlsScreen extends StatefulWidget {
     final SSHClient? client;
@@ -22,6 +23,22 @@ class ControlsScreen extends StatefulWidget {
 class _ControlsScreenState extends State<ControlsScreen> {
 
     String _status = 'Ready';
+
+    FlutterTts flutterTts = FlutterTts();
+    bool _isMuted = false;
+
+    Future<void> _speak(String text) async {
+      if (_isMuted) return;
+      await flutterTts.setLanguage("en-US");
+      await flutterTts.setSpeechRate(0.5);
+      await flutterTts.speak(text);
+    }
+
+    void _toggleMute() {
+      setState(() {
+        _isMuted = !_isMuted;
+      });
+    }
 
     Future<void> _sendCommand(String command) async {
         setState(() => _status = 'Sending...');
@@ -74,6 +91,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
     // send logo
     Future<void> _sendLogo() async {
       setState(() => _status = 'Uploading logo');
+      await _speak("Sending Liquid Galaxy logo");
         final int leftScreen = widget.screens;
 
         // read logo as raw bytes
@@ -111,6 +129,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
     // send pyramid
     Future<void> _sendPyramid() async {
         setState(() => _status = 'Loading Pyramid KML...');
+        await _speak("Sending 3D pyramid");
         final String kmlContent =  await rootBundle.loadString('assets/kml/pyramid.kml');
 
         // upload via base64
@@ -140,6 +159,7 @@ class _ControlsScreenState extends State<ControlsScreen> {
 
       setState(() => _status = 'Loading Fly To KML...');
       print("Loading Fly To KML...");
+      await _speak("Flying to Hanoi, Vietnam");
 
       final String flyKml =  await rootBundle.loadString('assets/kml/flyTo.kml');
       final String base64KML = base64Encode(utf8.encode(flyKml));
@@ -167,6 +187,9 @@ class _ControlsScreenState extends State<ControlsScreen> {
     }
 
     Future<void> _clearLogos() async {
+      setState(() => _status = 'Clearing logo...');
+      print("Clearing logo...");
+      await _speak("Clearing logo");
       final int leftScreen = widget.screens;
       final String empty = '''<?xml version="1.0" encoding="UTF-8"?>
       <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -179,6 +202,9 @@ class _ControlsScreenState extends State<ControlsScreen> {
     }
 
     Future<void> _clearKMLs() async {
+       setState(() => _status = 'Clearing KMLs...');
+      print("Clearing KMLs...");
+      await _speak("Clearing KMLs");
       final String empty = '''<?xml version="1.0" encoding="UTF-8"?>
       <kml xmlns="http://www.opengis.net/kml/2.2">
       <Document></Document>
@@ -226,6 +252,8 @@ class _ControlsScreenState extends State<ControlsScreen> {
                         _button('Clear Logos', Colors.grey, _clearLogos),
                          const SizedBox(height: 12),
                         _button('Clear KMLs', Colors.blueGrey, _clearKMLs),
+                        const SizedBox(height: 12),
+                        _button(_isMuted? 'Unmuted' : 'Mute', Colors.black, _toggleMute),
                     ],
                 ),
             ),

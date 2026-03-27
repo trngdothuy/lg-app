@@ -34,21 +34,21 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     });
 
     // fake connection for testing
-    // await Future.delayed(const Duration(seconds: 2));
-    // setState(() => _isConnecting = false);
-    // if (mounted) {
-    //   Navigator.pushReplacement(
-    //     context, 
-    //     MaterialPageRoute(
-    //       builder: (_) => ControlsScreen(
-    //         client: null,
-    //         host: host, 
-    //         screens: screens,
-    //         ),
-    //       ),
-    //     );
-    // }
-    // return;
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isConnecting = false);
+    if (mounted) {
+      Navigator.pushReplacement(
+        context, 
+        MaterialPageRoute(
+          builder: (_) => ControlsScreen(
+            client: null,
+            host: host, 
+            screens: screens,
+            ),
+          ),
+        );
+    }
+    return;
 
     try {
       // open SSH connection
