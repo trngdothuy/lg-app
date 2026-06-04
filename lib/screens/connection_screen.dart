@@ -19,6 +19,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
   bool _isConnecting = false;
   String _errorMessage = '';
+  String _status = 'Not Connected'; 
 
   Future<void> _connect() async {
     final host = _hostController.text.trim();
@@ -34,21 +35,21 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     });
 
     // fake connection for testing
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isConnecting = false);
-    if (mounted) {
-      Navigator.pushReplacement(
-        context, 
-        MaterialPageRoute(
-          builder: (_) => ControlsScreen(
-            client: null,
-            host: host, 
-            screens: screens,
-            ),
-          ),
-        );
-    }
-    return;
+    // await Future.delayed(const Duration(seconds: 2));
+    // setState(() => _isConnecting = false);
+    // if (mounted) {
+    //   Navigator.pushReplacement(
+    //     context, 
+    //     MaterialPageRoute(
+    //       builder: (_) => ControlsScreen(
+    //         client: null,
+    //         host: host, 
+    //         screens: screens,
+    //         ),
+    //       ),
+    //     );
+    // }
+    // return;
 
     try {
       // open SSH connection
@@ -79,6 +80,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       setState(() {
         _errorMessage = 'Connection Failed: $e';
         _isConnecting = false;
+        _status = _errorMessage;
       });
     }
   }
@@ -108,6 +110,19 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // status
+            Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Text(
+                    'Status: $_status',
+                    style: const TextStyle(fontFamily: 'monospace'),
+                    ),
+            ),
 
             // input fields
             _buildField('Username', _userController),

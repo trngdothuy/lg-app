@@ -72,7 +72,6 @@ class _ControlsScreenState extends State<ControlsScreen> {
     }
 
     Future<void> _sendCommand(String command) async {
-        setState(() => _status = 'Sending $command');
         print('Running command: $command');
 
         try {
@@ -93,10 +92,10 @@ class _ControlsScreenState extends State<ControlsScreen> {
             client.close();
 
             print('Done');
-            setState(() => _status = 'Done');
+            setState(() => _status = 'Command sent');
         } catch (e) {
             print('Error $e');
-            setState(() => _status = 'Error: $e');
+            setState(() => _status = 'Error sending command: $e');
         }
     }
 
