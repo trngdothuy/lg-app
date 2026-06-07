@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'connection_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreenTwo extends StatefulWidget {
   const SplashScreenTwo({super.key});
@@ -26,7 +26,7 @@ class _SplashScreenTwoState extends State<SplashScreenTwo>
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const ConnectionScreen(),
+          pageBuilder: (_, __, ___) => const HomeScreen(),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 500),

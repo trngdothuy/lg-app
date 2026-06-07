@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'controls_screen.dart';
 
-class ConnectionScreen extends StatefulWidget {
-  const ConnectionScreen({super.key});
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
 
   @override 
-  State<ConnectionScreen> createState() => _ConnectionScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _ConnectionScreenState extends State<ConnectionScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
 
   final _userController = TextEditingController(text: 'lg1');
   final _hostController = TextEditingController(text: '192.168.56.101');
