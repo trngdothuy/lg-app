@@ -54,8 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 child: ClipOval(
-                  child: Image.network(
-                    'https://cdn.myportfolio.com/17be4dd08c5417027a544816a909fcf8/fb2dab8c-5de5-47ba-96bc-c262ccdcdad0_rw_600.gif?h=adec1dcadf3bdfb29a908988bfeb432e', 
+                  child: Image.asset(
+                    'assets/avatar/avatar.gif',
                     errorBuilder: (_, __, ___) => Container(
                       color: const Color(0xFFE8C84A),
                       child: const Icon(Icons.person, size: 60, color: Colors.white),

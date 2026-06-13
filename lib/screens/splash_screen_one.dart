@@ -55,8 +55,8 @@ class _SplashScreenOneState extends State<SplashScreenOne>
                 const Spacer(flex: 2),
 
                 // Logo Liquid Galaxy
-                Image.network(
-                  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjzI4JzY6oUy-dQaiW-HLmn5NQ7qiw7NUOoK-2cDU9cI6JwhPrNv0EkCacuKWFViEgXYrCFzlbCtHZQffY6a73j6_ATFjfeU7r6OxXxN5K8sGjfOlp3vvd6eCXZrozlu34fUG5_cKHmzZWa4axb-vJRKjLr2tryz0Zw30gTv3S0ET57xsCiD25WMPn3wA/s800/LIQUIDGALAXYLOGO.png',
+                Image.asset(
+                  'assets/logo/logo_liquid_galaxy.jpg',
                   height: 100,
                   fit: BoxFit.contain,
                 ),
@@ -64,8 +64,8 @@ class _SplashScreenOneState extends State<SplashScreenOne>
                 const SizedBox(height: 40),
 
                 // Logo GDG Lleida Lab
-                Image.network(
-                  'https://res.cloudinary.com/startup-grind/image/upload/c_fill,w_500,h_500,g_center/c_fill,dpr_2.0,f_auto,g_center,q_auto:good/v1/gcs/platform-data-goog/chapter_banners/blob_K7l4gYM',
+                Image.asset(
+                  'assets/logo/logo_gdg_lleida.png',
                   height: 100,
                   fit: BoxFit.contain,
                 ),
@@ -73,8 +73,8 @@ class _SplashScreenOneState extends State<SplashScreenOne>
                 const SizedBox(height: 40),
 
                 // Logo Red List
-                Image.network(
-                  'https://upload.wikimedia.org/wikipedia/en/thumb/e/ec/IUCN_Red_List.svg/1280px-IUCN_Red_List.svg.png', 
+                Image.asset(
+                  'assets/logo/logo_red_list.png',
                   height: 100,
                   fit: BoxFit.contain,
                 ),
