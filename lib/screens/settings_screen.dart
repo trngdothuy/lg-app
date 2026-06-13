@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'controls_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -19,6 +21,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isConnecting = false;
   String _errorMessage = '';
 
+  // QR scanner controller
+  // Expected QR JSON format:
+  // {
+  //   "username": "lg",
+  //   "ip": "192.168.1.10",
+  //   "port": "22",
+  //   "password": "lqgalaxy",
+  //   "screens": "5"
+  // }
+  void _openQrScanner() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => _QrScannerScreen(
+        onScanned: (raw) => _parseQrData(raw),
+      )),
+    );
+  }
+ 
+  void _parseQrData(String raw) {
+    try {
+      final Map<String, dynamic> data = json.decode(raw);
+ 
+      // Validate all required keys are present
+      final requiredKeys = ['username', 'ip', 'port', 'password', 'screens'];
+      final missing = requiredKeys.where((k) => !data.containsKey(k)).toList();
+      if (missing.isNotEmpty) {
+        setState(() {
+          _errorMessage = 'QR missing fields: ${missing.join(', ')}';
+        });
+        return;
+      }
+ 
+      setState(() {
+        _hostController.text     = data['ip'].toString().trim();
+        _portController.text     = data['port'].toString().trim();
+        _userController.text     = data['username'].toString().trim();
+        _passwordController.text = data['password'].toString().trim();
+        _screensController.text  = data['screens'].toString().trim();
+        _errorMessage            = '';
+      });
+    } on FormatException {
+      setState(() {
+        _errorMessage =
+            'QR format not recognised.\n'
+            'Expected JSON with: username, ip, port, password, screens';
+      });
+    }
+  }
+
+  // Connect to LG via SSH
   Future<void> _connect() async {
     final host = _hostController.text.trim();
     final port = int.tryParse(_portController.text) ?? 22;
@@ -70,6 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // ── Scan QR Code button ──────────────────────────────
               OutlinedButton.icon(
                 onPressed: () {
-                  // TODO: implement QR scanner
+                  _openQrScanner();
                 },
                 icon: const Icon(Icons.qr_code_scanner_outlined,
                     color: Color(0xFF555555)),
@@ -255,6 +307,261 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// QR Scanner screen
+// ══════════════════════════════════════════════════════════════════
+class _QrScannerScreen extends StatefulWidget {
+  final ValueChanged<String> onScanned;
+  const _QrScannerScreen({required this.onScanned});
+ 
+  @override
+  State<_QrScannerScreen> createState() => _QrScannerScreenState();
+}
+ 
+class _QrScannerScreenState extends State<_QrScannerScreen> {
+  final MobileScannerController _scannerController = MobileScannerController();
+  bool _scanned = false; // prevent firing twice
+  
+  @override
+  void dispose() {
+  _scannerController.dispose();
+  super.dispose();
+  }
+  
+  void _onDetect(BarcodeCapture capture) {
+  if (_scanned) return;
+  final barcode = capture.barcodes.firstOrNull;
+  final value = barcode?.rawValue;
+  if (value == null) return;
+  
+  _scanned = true;
+  _scannerController.stop();
+  Navigator.of(context).pop(); // close scanner
+  widget.onScanned(value); // pass data back
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+  return Scaffold(
+  backgroundColor: Colors.black,
+  body: Stack(
+  children: [
+  // ── Live camera feed ───────────────────────────────────
+  MobileScanner(
+  controller: _scannerController,
+  onDetect: _onDetect,
+  ),
+  
+  // ── Overlay: dimmed border + scan window ───────────────
+  _ScanOverlay(),
+  
+  // ── Top bar ────────────────────────────────────────────
+  SafeArea(
+  child: Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  child: Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+  // Back button
+  IconButton(
+  icon: const Icon(Icons.arrow_back_ios_new,
+  color: Colors.white),
+  onPressed: () => Navigator.of(context).pop(),
+  ),
+  const Text(
+  'Scan QR Code',
+  style: TextStyle(
+  color: Colors.white,
+  fontSize: 17,
+  fontWeight: FontWeight.w600,
+  ),
+  ),
+  // Torch toggle
+  ValueListenableBuilder(
+  valueListenable: _scannerController,
+  builder: (_, state, __) {
+  final torchOn =
+  state.torchState == TorchState.on;
+  return IconButton(
+  icon: Icon(
+  torchOn
+  ? Icons.flashlight_on
+  : Icons.flashlight_off,
+  color: Colors.white,
+  ),
+  onPressed: () =>
+  _scannerController.toggleTorch(),
+  );
+  },
+  ),
+  ],
+  ),
+  ),
+  ),
+  
+  // ── Bottom hint ─────────────────────────────────────────
+  Positioned(
+  bottom: 60,
+  left: 0, right: 0,
+  child: Column(
+  children: const [
+  Text(
+  'Point the camera at the LG QR code',
+  textAlign: TextAlign.center,
+  style: TextStyle(
+  color: Colors.white70,
+  fontSize: 14,
+  ),
+  ),
+  SizedBox(height: 6),
+  Text(
+  'Format: host | port | user | pass | screens',
+  textAlign: TextAlign.center,
+  style: TextStyle(
+  color: Colors.white38,
+  fontSize: 12,
+  ),
+  ),
+  ],
+  ),
+  ),
+  ],
+  ),
+  );
+  }
+}
+ 
+// ──────────────────────────────────────────────────────────────
+// Scan overlay: dark surround + bright square cutout + corner marks
+// ──────────────────────────────────────────────────────────────
+class _ScanOverlay extends StatelessWidget {
+  const _ScanOverlay();
+  
+  @override
+  Widget build(BuildContext context) {
+  const windowSize = 260.0;
+  return LayoutBuilder(builder: (context, constraints) {
+  final cx = constraints.maxWidth / 2;
+  final cy = constraints.maxHeight / 2;
+  final left = cx - windowSize / 2;
+  final top = cy - windowSize / 2;
+  final right = cx + windowSize / 2;
+  final bottom = cy + windowSize / 2;
+  
+  return Stack(
+  children: [
+  // dark surround
+  CustomPaint(
+  size: Size(constraints.maxWidth, constraints.maxHeight),
+  painter: _DimPainter(
+  cutout: Rect.fromLTRB(left, top, right, bottom),
+  ),
+  ),
+  // corner brackets
+  Positioned(
+  left: left, top: top,
+  child: _CornerBracket(corner: _Corner.topLeft),
+  ),
+  Positioned(
+  right: constraints.maxWidth - right, top: top,
+  child: _CornerBracket(corner: _Corner.topRight),
+  ),
+  Positioned(
+  left: left, bottom: constraints.maxHeight - bottom,
+  child: _CornerBracket(corner: _Corner.bottomLeft),
+  ),
+  Positioned(
+  right: constraints.maxWidth - right,
+  bottom: constraints.maxHeight - bottom,
+  child: _CornerBracket(corner: _Corner.bottomRight),
+  ),
+  ],
+  );
+  });
+  }
+}
+ 
+class _DimPainter extends CustomPainter {
+  final Rect cutout;
+  const _DimPainter({required this.cutout});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+  final paint = Paint()..color = Colors.black.withOpacity(0.55);
+  final full = Rect.fromLTWH(0, 0, size.width, size.height);
+  final path = Path()
+  ..addRect(full)
+  ..addRRect(RRect.fromRectAndRadius(cutout, const Radius.circular(12)))
+  ..fillType = PathFillType.evenOdd;
+  canvas.drawPath(path, paint);
+  }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+ 
+enum _Corner { topLeft, topRight, bottomLeft, bottomRight }
+ 
+class _CornerBracket extends StatelessWidget {
+  final _Corner corner;
+  const _CornerBracket({required this.corner});
+  
+  @override
+  Widget build(BuildContext context) {
+  const len = 24.0;
+  const thick = 3.5;
+  const color = Color(0xFF4A7C59);
+  const r = Radius.circular(3);
+  
+  final isLeft = corner == _Corner.topLeft || corner == _Corner.bottomLeft;
+  final isTop = corner == _Corner.topLeft || corner == _Corner.topRight;
+  
+  return SizedBox(
+  width: len, height: len,
+  child: Stack(children: [
+  // horizontal arm
+  Positioned(
+  left: isLeft ? 0 : null,
+  right: isLeft ? null : 0,
+  top: isTop ? 0 : null,
+  bottom: isTop ? null : 0,
+  child: Container(
+  width: len, height: thick,
+  decoration: BoxDecoration(
+  color: color,
+  borderRadius: BorderRadius.only(
+  topLeft: (isLeft && isTop) ? r : Radius.zero,
+  topRight: (!isLeft && isTop) ? r : Radius.zero,
+  bottomLeft: (isLeft && !isTop) ? r : Radius.zero,
+  bottomRight: (!isLeft && !isTop) ? r : Radius.zero,
+  ),
+  ),
+  ),
+  ),
+  // vertical arm
+  Positioned(
+  left: isLeft ? 0 : null,
+  right: isLeft ? null : 0,
+  top: isTop ? 0 : null,
+  bottom: isTop ? null : 0,
+  child: Container(
+  width: thick, height: len,
+  decoration: BoxDecoration(
+  color: color,
+  borderRadius: BorderRadius.only(
+  topLeft: (isLeft && isTop) ? r : Radius.zero,
+  topRight: (!isLeft && isTop) ? r : Radius.zero,
+  bottomLeft: (isLeft && !isTop) ? r : Radius.zero,
+  bottomRight: (!isLeft && !isTop) ? r : Radius.zero,
+  ),
+  ),
+  ),
+  ),
+  ]),
+  );
   }
 }
 
