@@ -1,53 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'settings_screen.dart';
-import 'tools_screen.dart';
-// import 'controls_screen.dart';
+// import 'tools_screen.dart';
+import 'app_bottom_nav.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final SSHClient? client; // store the SSH client for later use
+  final String host; // store the host for later use
+  final int screens; // store the number of screens for later use
+  final bool isConnected; // update from SSH connection state
+
+  const HomeScreen({
+    super.key,
+    this.client,
+    this.host = '',
+    this.screens = 3,
+    this.isConnected = false,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-  bool _isConnected = false; // update from SSH connection state
-  SSHClient? _client; // store the SSH client for later use
-  String _host = ''; // store the host for later use
-  int _screens = 0; // store the number of screens for later use
+  late bool _isConnected; // update from SSH connection state
+  late SSHClient? _client; // store the SSH client for later use
+  late String _host; // store the host for later use
+  late int _screens; // store the number of screens for later use
 
-  void _onNavTap(int index) {
-    setState(() => _selectedIndex = index);
-    if (index == 4) {
-      // Settings tab
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      ).then((result) {
-        if (result != null && result['connected'] == true) {
-          setState(() {
-            _isConnected = true;
-            _client = result['client'] as SSHClient?;
-            _host = result['host'];
-            _screens = result['screens'];
-          });
-        }
-      });
-    }
-    else if (index == 3) {
-      // Tools tab
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ToolsScreen(
+  @override
+  void initState() {
+    super.initState();
+    _isConnected = widget.isConnected;
+    _client = widget.client;
+    _host = widget.host;
+    _screens = widget.screens;
+  }
+
+  void _openSettings() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SettingsScreen(
           client: _client,
           host: _host,
           screens: _screens,
           isConnected: _isConnected,
-        )),
-      );
-    }
+        ),
+      ),
+    );
   }
 
   @override
@@ -145,22 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(
                 width: 160,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const SettingsScreen()),
-                    ).then((result) {
-                      if (result != null && result['connected'] == true) {
-                        setState(() {
-                          _isConnected = true;
-                          _client = result['client'];
-                          _host = result['host'];
-                          _screens = result['screens'];
-                        });
-                      }
-                    });
-                  },
+                  onPressed: _openSettings,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2A2A2A),
                     side: const BorderSide(color: Color(0xFFCCCCCC)),
@@ -185,9 +171,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       // ── Bottom navigation bar ────────────────────────────────────
-      bottomNavigationBar: _BottomNav(
-        selectedIndex: _selectedIndex,
-        onTap: _onNavTap,
+      bottomNavigationBar: AppBottomNav(
+        selectedIndex: 0,
+        client: _client,
+        host: _host,
+        screens: _screens,
+        isConnected: _isConnected,
       ),
     );
   }

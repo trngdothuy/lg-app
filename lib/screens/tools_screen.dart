@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'app_bottom_nav.dart';
 
 class ToolsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -285,7 +286,14 @@ class _ToolsScreenState extends State<ToolsScreen> {
       ),
 
       // ── Bottom nav ────────────────────────────────────────────
-      bottomNavigationBar: _ToolsBottomNav(isDark: _isDarkMode),
+      bottomNavigationBar: AppBottomNav(
+        selectedIndex: 3,
+        client: widget.client,
+        host: widget.host,
+        screens: widget.screens,
+        isConnected: widget.isConnected,
+        isDark: _isDarkMode,
+        ),
     );
   }
 
@@ -315,20 +323,20 @@ class _ToolsScreenState extends State<ToolsScreen> {
             ? const Color(0xFF3A3A3A)
             : const Color(0xFF3D3D4E);
 
-    Widget child = busy
-        ? const SizedBox(
-            width: 18, height: 18,
-            child: CircularProgressIndicator(
-                color: Colors.white, strokeWidth: 2))
-        : Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-            ),
-          );
+    // Widget child = busy
+    //     ? const SizedBox(
+    //         width: 18, height: 18,
+    //         child: CircularProgressIndicator(
+    //             color: Colors.white, strokeWidth: 2))
+    //     : Text(
+    //         label,
+    //         textAlign: TextAlign.center,
+    //         style: const TextStyle(
+    //           color: Colors.white,
+    //           fontSize: 15,
+    //           fontWeight: FontWeight.w500,
+    //         ),
+    //       );
 
     final btn = GestureDetector(
       onTap: enabled ? () => _runBusy(label, onTap) : null,
@@ -342,10 +350,24 @@ class _ToolsScreenState extends State<ToolsScreen> {
             color: color,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Center(child: child),
+          child: Center(
+            child: busy
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2))
+              : Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
         ),
       ),
-    );
+    ),
+  );
 
     return width != null ? btn : btn;
   }

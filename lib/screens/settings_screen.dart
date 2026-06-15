@@ -2,24 +2,48 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'controls_screen.dart';
+import 'app_bottom_nav.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final SSHClient? client; // store the SSH client for later use
+  final String host; // store the host for later use
+  final int screens; // store the number of screens for later use
+  final bool isConnected; // update from SSH connection state
+
+  const SettingsScreen({
+    super.key,
+    this.client,
+    this.host = '',
+    this.screens = 3,
+    this.isConnected = false,
+  });
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _hostController = TextEditingController(text: '192.5.6.20');
-  final _portController = TextEditingController(text: '22');
-  final _userController = TextEditingController(text: 'liquidgalaxy');
-  final _passwordController = TextEditingController(text: 'lg');
-  final _screensController = TextEditingController(text: '3');
+  late final TextEditingController _hostController;
+  late final TextEditingController _portController;
+  late final TextEditingController _userController;
+  late final TextEditingController _passwordController;
+  late final TextEditingController _screensController;
 
   bool _isConnecting = false;
   String _errorMessage = '';
+  late bool _isConnected; // update from SSH connection state
+  late SSHClient? _client; // store the SSH client for later use
+
+  void initState() {
+    super.initState();
+    _isConnected = widget.isConnected;
+    _client = widget.client;
+    _hostController = TextEditingController(text: '192.168.56.101');
+    _portController = TextEditingController(text: '22');
+    _userController = TextEditingController(text: 'lg1');
+    _passwordController = TextEditingController(text: 'lq');
+    _screensController = TextEditingController(text: widget.screens.toString());
+  }
 
   // QR scanner controller
   // Expected QR JSON format:
@@ -92,27 +116,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await client.authenticated;
 
       if (mounted) {
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (_) => ControlsScreen(
-        //       client: client,
-        //       host: host,
-        //       screens: screens,
-        //     ),
-        //   ),
-        // );
-        Navigator.pop(context, {
-          'connected': true,
-          'client': client,
-          'host': host,
-          'screens': screens,
+        setState(() {
+          _isConnected = true;
+          _client = client;
+          _isConnecting = false;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Connection failed: $e';
         _isConnecting = false;
+        _isConnected = false;
       });
     }
   }
@@ -130,8 +144,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // UI
   @override
   Widget build(BuildContext context) {
+    final host = _hostController.text.trim();
+    final screens = int.tryParse(_screensController.text) ?? widget.screens;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        backgroundColor: const Color(0xFF4A7C59),
+        elevation: 0,
+        foregroundColor: Colors.white,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -264,7 +287,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
 
       // ── Bottom navigation bar ────────────────────────────────────
-      bottomNavigationBar: _SettingsBottomNav(),
+      bottomNavigationBar: AppBottomNav(
+        selectedIndex: 4,
+        client: _client,
+        host: host,
+        screens: screens,
+        isConnected: _isConnected,
+      ),
     );
   }
 
