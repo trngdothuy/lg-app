@@ -37,11 +37,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       )),
     );
   }
- 
+
   void _parseQrData(String raw) {
     try {
       final Map<String, dynamic> data = json.decode(raw);
- 
+
       // Validate all required keys are present
       final requiredKeys = ['username', 'ip', 'port', 'password', 'screens'];
       final missing = requiredKeys.where((k) => !data.containsKey(k)).toList();
@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
         return;
       }
- 
+
       setState(() {
         _hostController.text     = data['ip'].toString().trim();
         _portController.text     = data['port'].toString().trim();
@@ -92,16 +92,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await client.authenticated;
 
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ControlsScreen(
-              client: client,
-              host: host,
-              screens: screens,
-            ),
-          ),
-        );
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (_) => ControlsScreen(
+        //       client: client,
+        //       host: host,
+        //       screens: screens,
+        //     ),
+        //   ),
+        // );
+        Navigator.pop(context, {
+          'connected': true,
+          'client': client,
+          'host': host,
+          'screens': screens,
+        });
       }
     } catch (e) {
       setState(() {
@@ -316,33 +322,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
 class _QrScannerScreen extends StatefulWidget {
   final ValueChanged<String> onScanned;
   const _QrScannerScreen({required this.onScanned});
- 
+
   @override
   State<_QrScannerScreen> createState() => _QrScannerScreenState();
 }
- 
+
 class _QrScannerScreenState extends State<_QrScannerScreen> {
   final MobileScannerController _scannerController = MobileScannerController();
   bool _scanned = false; // prevent firing twice
-  
+
   @override
   void dispose() {
   _scannerController.dispose();
   super.dispose();
   }
-  
+
   void _onDetect(BarcodeCapture capture) {
   if (_scanned) return;
   final barcode = capture.barcodes.firstOrNull;
   final value = barcode?.rawValue;
   if (value == null) return;
-  
+
   _scanned = true;
   _scannerController.stop();
   Navigator.of(context).pop(); // close scanner
   widget.onScanned(value); // pass data back
   }
-  
+
   @override
   Widget build(BuildContext context) {
   return Scaffold(
@@ -354,10 +360,10 @@ class _QrScannerScreenState extends State<_QrScannerScreen> {
   controller: _scannerController,
   onDetect: _onDetect,
   ),
-  
+
   // ── Overlay: dimmed border + scan window ───────────────
   _ScanOverlay(),
-  
+
   // ── Top bar ────────────────────────────────────────────
   SafeArea(
   child: Padding(
@@ -401,7 +407,7 @@ class _QrScannerScreenState extends State<_QrScannerScreen> {
   ),
   ),
   ),
-  
+
   // ── Bottom hint ─────────────────────────────────────────
   Positioned(
   bottom: 60,
@@ -433,13 +439,13 @@ class _QrScannerScreenState extends State<_QrScannerScreen> {
   );
   }
 }
- 
+
 // ──────────────────────────────────────────────────────────────
 // Scan overlay: dark surround + bright square cutout + corner marks
 // ──────────────────────────────────────────────────────────────
 class _ScanOverlay extends StatelessWidget {
   const _ScanOverlay();
-  
+
   @override
   Widget build(BuildContext context) {
   const windowSize = 260.0;
@@ -450,7 +456,7 @@ class _ScanOverlay extends StatelessWidget {
   final top = cy - windowSize / 2;
   final right = cx + windowSize / 2;
   final bottom = cy + windowSize / 2;
-  
+
   return Stack(
   children: [
   // dark surround
@@ -483,11 +489,11 @@ class _ScanOverlay extends StatelessWidget {
   });
   }
 }
- 
+
 class _DimPainter extends CustomPainter {
   final Rect cutout;
   const _DimPainter({required this.cutout});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
   final paint = Paint()..color = Colors.black.withOpacity(0.55);
@@ -498,27 +504,27 @@ class _DimPainter extends CustomPainter {
   ..fillType = PathFillType.evenOdd;
   canvas.drawPath(path, paint);
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
- 
+
 enum _Corner { topLeft, topRight, bottomLeft, bottomRight }
- 
+
 class _CornerBracket extends StatelessWidget {
   final _Corner corner;
   const _CornerBracket({required this.corner});
-  
+
   @override
   Widget build(BuildContext context) {
   const len = 24.0;
   const thick = 3.5;
   const color = Color(0xFF4A7C59);
   const r = Radius.circular(3);
-  
+
   final isLeft = corner == _Corner.topLeft || corner == _Corner.bottomLeft;
   final isTop = corner == _Corner.topLeft || corner == _Corner.topRight;
-  
+
   return SizedBox(
   width: len, height: len,
   child: Stack(children: [

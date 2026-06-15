@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/splash_screen_one.dart';
 
-
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env"); // Load environment variables from .env file
   runApp(const MyApp());
 }
 

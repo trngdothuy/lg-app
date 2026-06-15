@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:dartssh2/dartssh2.dart';
 import 'settings_screen.dart';
+import 'tools_screen.dart';
+// import 'controls_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,6 +14,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isConnected = false; // update from SSH connection state
+  SSHClient? _client; // store the SSH client for later use
+  String _host = ''; // store the host for later use
+  int _screens = 0; // store the number of screens for later use
 
   void _onNavTap(int index) {
     setState(() => _selectedIndex = index);
@@ -19,11 +25,28 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      ).then((connected) {
-        if (connected == true) {
-          setState(() => _isConnected = true);
+      ).then((result) {
+        if (result != null && result['connected'] == true) {
+          setState(() {
+            _isConnected = true;
+            _client = result['client'] as SSHClient?;
+            _host = result['host'];
+            _screens = result['screens'];
+          });
         }
       });
+    }
+    else if (index == 3) {
+      // Tools tab
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ToolsScreen(
+          client: _client,
+          host: _host,
+          screens: _screens,
+          isConnected: _isConnected,
+        )),
+      );
     }
   }
 
@@ -127,9 +150,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       context,
                       MaterialPageRoute(
                           builder: (_) => const SettingsScreen()),
-                    ).then((connected) {
-                      if (connected == true) {
-                        setState(() => _isConnected = true);
+                    ).then((result) {
+                      if (result != null && result['connected'] == true) {
+                        setState(() {
+                          _isConnected = true;
+                          _client = result['client'];
+                          _host = result['host'];
+                          _screens = result['screens'];
+                        });
                       }
                     });
                   },
