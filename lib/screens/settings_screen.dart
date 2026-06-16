@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'app_bottom_nav.dart';
+import 'tools_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -34,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late bool _isConnected; // update from SSH connection state
   late SSHClient? _client; // store the SSH client for later use
 
+  @override
   void initState() {
     super.initState();
     _isConnected = widget.isConnected;
@@ -106,6 +108,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _errorMessage = '';
     });
 
+    // fake connection for testing
+    // await Future.delayed(const Duration(seconds: 2));
+    // setState(() => _isConnecting = false);
+    // if (mounted) {
+    //     setState(() {
+    //       _isConnected = true;
+    //       // _client = client;
+    //       _isConnecting = false;
+    //     });
+    //   }
+    // return;
+
     try {
       final socket = await SSHSocket.connect(host, port);
       final client = SSHClient(
@@ -115,12 +129,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       await client.authenticated;
 
+      // fly to Vietnam on successful connection
+      await _flyToVietnam(client);
+
       if (mounted) {
-        setState(() {
-          _isConnected = true;
-          _client = client;
-          _isConnecting = false;
-        });
+        // setState(() {
+        //   _isConnected = true;
+        //   _client = client;
+        //   _isConnecting = false;
+        // });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ToolsScreen(
+              client: client,
+              host: host,
+              screens: screens,
+              isConnected: true,
+            ),
+          ),
+        );
       }
     } catch (e) {
       setState(() {
@@ -128,6 +156,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _isConnecting = false;
         _isConnected = false;
       });
+    }
+  }
+
+  Future<void> _run(SSHClient client, String cmd) async {
+    try {
+      final session = await client.execute(cmd);
+      await session.done;
+    } catch (e) {
+      debugPrint('SSH command error: $e');
+    }
+  }
+
+  Future<void> _flyToVietnam(SSHClient client) async {
+    const flyKml = '''<?xml version="1.0" encoding="UTF-8"?>
+      <kml xmlns="http://www.opengis.net/kml/2.2">
+        <Document>
+          <LookAt>
+            <longitude>105.8342</longitude>
+            <latitude>21.0278</latitude>
+            <altitude>0</altitude>
+            <heading>0</heading>
+            <tilt>0</tilt>
+            <range>500000</range>
+          </LookAt>
+        </Document>
+      </kml>''';
+
+    final b64 = base64Encode(utf8.encode(flyKml));
+    final screens = int.tryParse(_screensController.text) ?? 3;
+    await _run(client, "echo '$b64' | base64 -d > /var/www/html/kml/flyTo.kml");
+    await _run(client, "echo 'http://lg1:81/kml/flyTo.kml' > /var/www/html/kmls.txt");
+    for (int i = 1; i <= screens; i++) {
+      await _run(client,
+        "ssh -o StrictHostKeyChecking=no lg$i@lg$i "
+        "'echo \"http://lg1:81/kml/flyTo.kml\" > /tmp/query.txt'");
     }
   }
 
@@ -161,6 +224,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ── Connected badge (top right) ──────────────────────
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 20, top: 12),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.check,
+                    size: 14,
+                    color: widget.isConnected
+                        ? const Color(0xFF2E7D32)
+                        : Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.isConnected ? 'Connected' : 'Not Connected',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: widget.isConnected
+                          ? const Color(0xFF2E7D32)
+                          : Colors.grey,
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+
               const SizedBox(height: 12),
 
               // ── Scan QR Code button ──────────────────────────────
