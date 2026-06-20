@@ -130,8 +130,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       await client.authenticated;
 
-      // fly to Vietnam on successful connection
+      // fly to Vietnam and send logo only after successful connection
       await _flyToVietnam(client);
+      await _sendLogo(client);
 
       if (mounted) {
         // setState(() {
@@ -170,19 +171,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _flyToVietnam(SSHClient client) async {
-    // const flyKml = '''<?xml version="1.0" encoding="UTF-8"?>
-    //   <kml xmlns="http://www.opengis.net/kml/2.2">
-    //     <Document>
-    //       <LookAt>
-    //         <longitude>105.8342</longitude>
-    //         <latitude>21.0278</latitude>
-    //         <altitude>0</altitude>
-    //         <heading>0</heading>
-    //         <tilt>0</tilt>
-    //         <range>500000</range>
-    //       </LookAt>
-    //     </Document>
-    //   </kml>''';
     final screens = int.tryParse(_screensController.text) ?? 3;
 
     print('Preparing to send flyTo.kml to LG...');
@@ -190,22 +178,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Load KML file from assets and encode it in base64
     final String flyKml = await rootBundle.loadString('assets/kml/flyTo.kml');
     final base64EncodedKml = base64Encode(utf8.encode(flyKml));
+    print('KML file loaded and encoded in base64.');
 
     // Upload KML file
     await _run(client, 
       "echo '$base64EncodedKml' | base64 -d > /var/www/html/kml/flyTo.kml");
-    
+    print('flyTo.kml uploaded to /var/www/html/kml/flyTo.kml');
+
     // Write to kmls.txt
     await _run(client, 
       "echo 'http://lg1:81/kml/flyTo.kml' > /var/www/html/kmls.txt");
-    
+    print('flyTo.kml URL written to /var/www/html/kmls.txt');
+    print('Preparing to trigger flyTo on each screen...');
     // Trigger flyTo on each screen via query.txt
     for (int i = 1; i <= screens; i++) {
       await _run(client,
         "ssh -o StrictHostKeyChecking=no lg$i@lg$i "
         "'echo \"http://lg1:81/kml/flyTo.kml\" > /tmp/query.txt'");
     }
+    print('Fly to Vietnam command sent to $screens screens.');
   }
+
+  // send logo
+  Future<void> _sendLogo(SSHClient client) async {
+    final int leftScreen = int.tryParse(_screensController.text) ?? 3;
+
+    // read logo as raw bytes
+    final ByteData data = await rootBundle.load('assets/logo/logo_liquid_galaxy.jpg');
+    final List<int> bytes = data.buffer.asUint8List();
+    final String base64Logo = base64Encode(bytes);
+
+    await _run(client,
+        "echo '$base64Logo' | base64 -d > /var/www/html/logo.png"
+    );
+
+    final String kml = '''<?xml version="1.0" encoding="UTF-8"?>
+  <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document>
+          <ScreenOverlay>
+              <name>LG Logo</name>
+              <Icon>
+                  <href>http://lg1:81/logo.png</href>
+              </Icon>
+              <overlayXY x="0" y="1" xunits="fraction" yunits="fraction"/>
+              <screenXY x="0.02" y="0.95" xunits="fraction" yunits="fraction"/>
+              <size x="200" y="0" xunits="pixels" yunits="pixels"/>
+          </ScreenOverlay>
+      </Document>
+  </kml>''';
+
+  final String base64KML = base64Encode(utf8.encode(kml));
+  await _run(client,
+      "echo '$base64KML' | base64 -d > /var/www/html/kml/slave_$leftScreen.kml"
+  );
+
+  await _setRefresh(client);
+  }
+
+  // Refresh
+  Future<void> _setRefresh(SSHClient client) async {
+    for (var i = 2; i <= widget.screens; i++) {
+      final s = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href>';
+      final r = '$s<refreshMode>onInterval<\\/refreshMode>'
+          '<refreshInterval>2<\\/refreshInterval>';
+      await _run(client, 
+        "sshpass -p lg ssh -t lg$i@lg$i "
+        "'echo lg | sudo -S sed -i \"s/$r/$s/\" ~/earth/kml/slave/myplaces.kml'",
+      );
+      await _run(client,
+        "sshpass -p lg ssh -t lg$i@lg$i "
+        "'echo lg | sudo -S sed -i \"s/$s/$r/\" ~/earth/kml/slave/myplaces.kml'",
+      );
+    }
+  }
+
 
   @override
   void dispose() {

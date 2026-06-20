@@ -143,7 +143,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
     }
   }
 
-  // ── Shared refresh helper (mirrors controls_screen logic) ─────
+  // Refresh
   Future<void> _setRefresh() async {
     for (var i = 2; i <= widget.screens; i++) {
       final s = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href>';

@@ -10,7 +10,7 @@
 			<altitude>0</altitude>
 			<heading>0</heading>
 			<tilt>0</tilt>
-			<range>50000000</range>
+			<range>5000000</range>
 			<altitudeMode>relativeToGround</altitudeMode>
 		</LookAt>
 </Document>
