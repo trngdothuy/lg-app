@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _hostController = TextEditingController(text: '192.168.56.101');
     _portController = TextEditingController(text: '22');
     _userController = TextEditingController(text: 'lg1');
-    _passwordController = TextEditingController(text: 'lq');
+    _passwordController = TextEditingController(text: 'lg');
     _screensController = TextEditingController(text: widget.screens.toString());
   }
 

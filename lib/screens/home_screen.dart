@@ -42,10 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => SettingsScreen(
-          client: _client,
-          host: _host,
-          screens: _screens,
-          isConnected: _isConnected,
+          // client: _client,
+          // host: _host,
+          // screens: _screens,
+          // isConnected: _isConnected,
         ),
       ),
     );
