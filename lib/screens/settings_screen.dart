@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'app_bottom_nav.dart';
@@ -169,24 +170,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _flyToVietnam(SSHClient client) async {
-    const flyKml = '''<?xml version="1.0" encoding="UTF-8"?>
-      <kml xmlns="http://www.opengis.net/kml/2.2">
-        <Document>
-          <LookAt>
-            <longitude>105.8342</longitude>
-            <latitude>21.0278</latitude>
-            <altitude>0</altitude>
-            <heading>0</heading>
-            <tilt>0</tilt>
-            <range>500000</range>
-          </LookAt>
-        </Document>
-      </kml>''';
-
-    final b64 = base64Encode(utf8.encode(flyKml));
+    // const flyKml = '''<?xml version="1.0" encoding="UTF-8"?>
+    //   <kml xmlns="http://www.opengis.net/kml/2.2">
+    //     <Document>
+    //       <LookAt>
+    //         <longitude>105.8342</longitude>
+    //         <latitude>21.0278</latitude>
+    //         <altitude>0</altitude>
+    //         <heading>0</heading>
+    //         <tilt>0</tilt>
+    //         <range>500000</range>
+    //       </LookAt>
+    //     </Document>
+    //   </kml>''';
     final screens = int.tryParse(_screensController.text) ?? 3;
-    await _run(client, "echo '$b64' | base64 -d > /var/www/html/kml/flyTo.kml");
-    await _run(client, "echo 'http://lg1:81/kml/flyTo.kml' > /var/www/html/kmls.txt");
+
+    print('Preparing to send flyTo.kml to LG...');
+
+    // Load KML file from assets and encode it in base64
+    final String flyKml = await rootBundle.loadString('assets/kml/flyTo.kml');
+    final base64EncodedKml = base64Encode(utf8.encode(flyKml));
+
+    // Upload KML file
+    await _run(client, 
+      "echo '$base64EncodedKml' | base64 -d > /var/www/html/kml/flyTo.kml");
+    
+    // Write to kmls.txt
+    await _run(client, 
+      "echo 'http://lg1:81/kml/flyTo.kml' > /var/www/html/kmls.txt");
+    
+    // Trigger flyTo on each screen via query.txt
     for (int i = 1; i <= screens; i++) {
       await _run(client,
         "ssh -o StrictHostKeyChecking=no lg$i@lg$i "
