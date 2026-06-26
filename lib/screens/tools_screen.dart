@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
-import 'app_bottom_nav.dart';
+import '../../providers/nav_bar_provider.dart';
 
 class ToolsScreen extends StatefulWidget {
   final SSHClient? client;

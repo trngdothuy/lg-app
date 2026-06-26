@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'settings_screen.dart';
-// import 'tools_screen.dart';
-import 'app_bottom_nav.dart';
+import '../../providers/nav_bar_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use

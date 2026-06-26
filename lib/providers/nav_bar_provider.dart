@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 
 // Forward declarations to avoid circular imports
-import 'home_screen.dart';
-import 'tools_screen.dart';
-import 'settings_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/tools_screen.dart';
+import '../screens/settings_screen.dart';
 
 class AppBottomNav extends StatelessWidget {
   final int selectedIndex;

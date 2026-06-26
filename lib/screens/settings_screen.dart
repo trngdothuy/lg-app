@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'app_bottom_nav.dart';
+import '../../providers/nav_bar_provider.dart';
 import 'tools_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
