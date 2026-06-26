@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'screens/connection_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'screens/splash_screen_one.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env"); // Load environment variables from .env file
   runApp(const MyApp());
 }
 
@@ -11,12 +13,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LG App',
+      title: 'Red List Endangered Species Living Atlas App',
       theme: ThemeData(
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const ConnectionScreen(),
+      home: const SplashScreenOne(),
     );
   }
 }
