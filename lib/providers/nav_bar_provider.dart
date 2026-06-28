@@ -5,6 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import '../screens/home_screen.dart';
 import '../screens/tools_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/maps_screen.dart';
 
 class AppBottomNav extends StatelessWidget {
   final int selectedIndex;
@@ -31,6 +32,14 @@ class AppBottomNav extends StatelessWidget {
     switch (index) {
       case 0:
         target = HomeScreen(
+          client: client,
+          host: host,
+          screens: screens,
+          isConnected: isConnected,
+        );
+        break;
+      case 1:
+        target = MapsScreen(
           client: client,
           host: host,
           screens: screens,
