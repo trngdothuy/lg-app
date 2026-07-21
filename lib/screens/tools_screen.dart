@@ -110,23 +110,6 @@ class _ToolsScreenState extends State<ToolsScreen> {
     await _setRefresh();
   }
 
-  /// Reset slave KML files to default empty state
-  Future<void> _resetSlave() async {
-    const empty = '''<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2"><Document></Document></kml>''';
-    final b64 = _b64(empty);
-    for (var i = 1; i <= widget.screens; i++) {
-      await _run(
-        "echo '$b64' | base64 -d > /var/www/html/kml/slave_$i.kml",
-      );
-    }
-    await _setRefresh();
-  }
-
-  /// Trigger a manual KML refresh on all slave nodes
-  Future<void> _refreshSlave() async {
-    await _setRefresh();
-  }
 
   /// Power off all LG nodes
   Future<void> _powerOff() async {
@@ -245,9 +228,6 @@ class _ToolsScreenState extends State<ToolsScreen> {
                   const SizedBox(height: 20),
                   _row('Clean KML',     _cleanKml,
                        'Clean Logos',   _cleanLogos),
-                  const SizedBox(height: 20),
-                  _row('Reset Slave',   _resetSlave,
-                       'Refresh Slave', _refreshSlave),
                 ],
               ),
             ),
