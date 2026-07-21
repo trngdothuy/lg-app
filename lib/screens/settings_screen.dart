@@ -133,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       // fly to Vietnam and send logo only after successful connection
       await _flyToVietnam(client);
+      await Future.delayed(const Duration(seconds: 5));
       await _sendLogo(client);
 
       if (mounted) {
@@ -224,7 +225,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               </Icon>
               <overlayXY x="0" y="1" xunits="fraction" yunits="fraction"/>
               <screenXY x="0.02" y="0.95" xunits="fraction" yunits="fraction"/>
-              <size x="200" y="0" xunits="pixels" yunits="pixels"/>
+              <size x="500" y="0" xunits="pixels" yunits="pixels"/>
           </ScreenOverlay>
       </Document>
   </kml>''';
