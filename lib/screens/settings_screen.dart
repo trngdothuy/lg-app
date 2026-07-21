@@ -32,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _screensController;
 
   bool _isConnecting = false;
+  bool _obscurePassword = true;
   String _errorMessage = '';
   late bool _isConnected; // update from SSH connection state
   late SSHClient? _client; // store the SSH client for later use
@@ -460,7 +461,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: isPassword,
+        obscureText: isPassword ? _obscurePassword : false,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         style: const TextStyle(
           color: Color(0xFF1A1A1A),
@@ -479,11 +480,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontSize: 13,
           ),
           // Clear (×) button on the right
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.cancel_outlined,
-                color: Color(0xFFAAAAAA), size: 20),
-            onPressed: () => controller.clear(),
-          ),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: const Color(0xFFAAAAAA),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                )
+              : IconButton(
+                  icon: const Icon(
+                    Icons.cancel_outlined,
+                    color: Color(0xFFAAAAAA),
+                    size: 20,
+                  ),
+                  onPressed: () => controller.clear(),
+                ),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
