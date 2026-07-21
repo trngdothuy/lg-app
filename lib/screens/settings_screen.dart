@@ -202,7 +202,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // send logo
   Future<void> _sendLogo(SSHClient client) async {
-    final int leftScreen = int.tryParse(_screensController.text) ?? 3;
+    final int screens = int.tryParse(_screensController.text) ?? 3;
+    final int leftMostScreen = (screens ~/ 2) + 2;
 
     // read logo as raw bytes
     final ByteData data = await rootBundle.load('assets/logo/logo_liquid_galaxy.jpg');
@@ -230,7 +231,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   final String base64KML = base64Encode(utf8.encode(kml));
   await _run(client,
-      "echo '$base64KML' | base64 -d > /var/www/html/kml/slave_$leftScreen.kml"
+      "echo '$base64KML' | base64 -d > /var/www/html/kml/slave_$leftMostScreen.kml"
   );
 
   await _setRefresh(client);
@@ -238,7 +239,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Refresh
   Future<void> _setRefresh(SSHClient client) async {
-    for (var i = 2; i <= widget.screens; i++) {
+    final int screens = int.tryParse(_screensController.text) ?? 3;
+
+    for (var i = 2; i <= screens; i++) {
       final s = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href>';
       final r = '$s<refreshMode>onInterval<\\/refreshMode>'
           '<refreshInterval>2<\\/refreshInterval>';
