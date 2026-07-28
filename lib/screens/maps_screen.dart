@@ -865,3 +865,49 @@ const String _kDarkStyle = '''[
   {"featureType":"water","elementType":"geometry",
    "stylers":[{"color":"#000000"}]}
 ]''';
+
+
+// import 'package:flutter/material.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+// class MapsScreen extends StatefulWidget {
+
+//   final SSHClient? client;
+//   final String host;
+//   final int screens;
+//   final bool isConnected;
+
+//   const MapsScreen({
+//     super.key,
+//     required this.client,
+//     required this.host,
+//     required this.screens,
+//     required this.isConnected,
+//   });
+
+
+//   @override
+//   State<MapsScreen> createState() => _MapPageState();
+// }
+
+// class _MapPageState extends State<MapsScreen> {
+//   late GoogleMapController mapController;
+
+//   final LatLng _center = const LatLng(41.6177, 0.6200);
+
+//   void _onMapCreated(GoogleMapController controller) {
+//     mapController = controller;
+//   }
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: GoogleMap(
+//         onMapCreated: _onMapCreated,
+//         initialCameraPosition: CameraPosition(
+//           target: _center,
+//           zoom: 12.0,
+//         ),
+//       ),
+//     );
+//   }
+// }

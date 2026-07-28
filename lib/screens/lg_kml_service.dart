@@ -70,8 +70,9 @@ class LgKmlService {
 
     // Logos
     for (final e in {
-      'lg_logo.png':      'assets/logo/logo1.png',
-      'redlist_logo.png': 'assets/logo/logo2.png',
+      'lg_logo.png':      'assets/logo/logo_liquid_galaxy.jpg',
+      'gdglleida_logo.png':'assets/logo/logo_gdg_lleida.png',
+      'redlist_logo.png': 'assets/logo/logo_red_list.png',
     }.entries) {
       final b64 = base64Encode(await loadAsset(e.value));
       await _run("echo '$b64' | base64 -d > /var/www/html/kml/logos/${e.key}");
