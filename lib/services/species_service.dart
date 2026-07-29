@@ -4,18 +4,33 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'species_data.dart';
+import '../models/species.dart';
 
 class SpeciesStory {
-  final String narrative;           // HTML for LG right screen
-  final String ttsScript;           // plain text for TTS voice
-  final Map<String, String> iucnFields; // raw IUCN fields
+  final String narrative;
+  final String ttsScript;
+  final Map<String,String> iucnFields;
 
   const SpeciesStory({
     required this.narrative,
     required this.ttsScript,
     required this.iucnFields,
   });
+
+  String get habitat =>
+      iucnFields['habitat_text'] ?? '';
+
+  String get threats =>
+      iucnFields['threats'] ?? '';
+
+  String get conservation =>
+      iucnFields['conservation'] ?? '';
+
+  String get population =>
+      iucnFields['population'] ?? '';
+
+  String get countries =>
+      iucnFields['countries'] ?? '';
 }
 
 class SpeciesService {

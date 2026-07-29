@@ -25,28 +25,64 @@ class _ToolsScreenState extends State<ToolsScreen> {
 
   bool _isDarkMode  = false;
   String? _busyBtn;  // label of button currently running
+  String _status = '';
 
   // ── SSH helper ────────────────────────────────────────────────
   Future<void> _run(String cmd) async {
-    if (widget.client == null) return;
+    if (widget.client == null) {
+      print("Client is null");
+      return;
+    }
+    
+    print("Running");
+    print(cmd);
+
     try {
       final session = await widget.client!.execute(cmd);
+      
+      final stdout = await utf8.decoder.bind(session.stdout).join();
+      final stderr = await utf8.decoder.bind(session.stderr).join();
+
+      print("STDOUT:");
+      print(stdout);
+
+      print("STDERR:");
+      print(stderr);
+
       await session.done;
+
+      print("Exit: ${session.exitCode}");
     } catch (e) {
+      print(e);
       _showSnack('Error: $e');
     }
   }
 
   Future<void> _runBusy(String label, Future<void> Function() action) async {
     if (_busyBtn != null) return; // prevent double-tap
-    setState(() => _busyBtn = label);
+    setState(() {
+      _busyBtn = label;
+      _status = '$label in progress...';
+  });
     try {
       await action();
-      _showSnack('$label — done');
+      if (!mounted) return;
+      setState(() {
+        _status = "$label completed successfully.";
+      });
+
+      _showSnack("$label done");
     } catch (e) {
-      _showSnack('$label failed: $e');
+      if (!mounted) return;
+      setState(() {
+        _status = "$label failed:\n$e";
+      });
+
+      _showSnack("$label failed");
     } finally {
-      if (mounted) setState(() => _busyBtn = null);
+      if (mounted) {
+        setState(() => _busyBtn = null);
+      }
     }
   }
 
@@ -213,6 +249,18 @@ class _ToolsScreenState extends State<ToolsScreen> {
                     ),
                   ),
                 ]),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                _status,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _isDarkMode ? Colors.white70 : Colors.black54,
+                ),
+                textAlign: TextAlign.center,
               ),
             ),
 

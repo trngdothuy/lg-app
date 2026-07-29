@@ -4,7 +4,7 @@
 // Screen layout (screens=3): lg3=left logos | lg2=centre           | lg1=right info
 import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
-import 'species_data.dart';
+import '../models/species_data.dart';
 
 class LgKmlService {
   final SSHClient client;
@@ -177,10 +177,10 @@ $orbit
   Future<void> flyTo({
     required double lat,
     required double lng,
-    double range    = 700000,
-    double tilt     = 45,
+    required double range,
+    double tilt     = 0,
     double heading  = 0,
-    double duration = 2.5,
+    double duration = 0,
   }) async {
     final kml = '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
@@ -192,9 +192,11 @@ $orbit
           <gx:duration>$duration</gx:duration>
           <gx:flyToMode>smooth</gx:flyToMode>
           <LookAt>
-            <longitude>$lng</longitude><latitude>$lat</latitude>
-            <altitude>0</altitude><range>$range</range>
-            <tilt>$tilt</tilt><heading>$heading</heading>
+            <longitude>$lng</longitude
+            <latitude>$lat</latitude>
+            <range>$range</range>
+            <tilt>$tilt</tilt>
+            <heading>$heading</heading>
           </LookAt>
         </gx:FlyTo>
       </gx:Playlist>

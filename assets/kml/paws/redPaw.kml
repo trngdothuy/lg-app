@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Placemark>
+    <name>Paw Print Tip Jar</name>
+    <description>3d red paw</description>
+    <Model>
+      <Location>
+        <longitude>28.2916</longitude>
+        <latitude>16.6291</latitude>
+        <altitude>0</altitude>
+      </Location>
+      <Orientation>
+        <heading>0</heading>
+        <tilt>0</tilt>
+        <roll>0</roll>
+      </Orientation>
+      <Scale>
+        <x>1</x>  
+        <y>1</y>
+        <z>1</z>
+      </Scale>
+      <Link>
+        <href>redPaw.dae</href>
+      </Link>
+    </Model>
+  </Placemark>
+</kml>

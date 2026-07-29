@@ -32,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _screensController;
 
   bool _isConnecting = false;
+  String _connectionStatus = '';
   bool _obscurePassword = true;
   String _errorMessage = '';
   late bool _isConnected; // update from SSH connection state
@@ -108,6 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _isConnecting = true;
       _errorMessage = '';
+      _connectionStatus = 'Connecting to Liquid Galaxy...';
     });
 
     // fake connection for testing
@@ -131,10 +133,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       await client.authenticated;
 
+      setState(() {
+        _connectionStatus = 'Connected. Preparing Liquid Galaxy...';
+      });
+
       // fly to Vietnam and send logo only after successful connection
       await _flyToVietnam(client);
-      await Future.delayed(const Duration(seconds: 5));
+      // await _setRefresh(client);
+      // await Future.delayed(const Duration(seconds: 5));
+      setState(() {
+        _connectionStatus = 'Uploading logo...';
+      });
       await _sendLogo(client);
+
+      await Future.delayed(
+        const Duration(seconds: 1),
+      );
+
+      setState(() {
+        _connectionStatus = 'Configuring displays...';
+      });
+
+      await _run(
+          client,
+          "mkdir -p /var/www/html/images",
+      );
+
+      await _run(
+          client,
+          "mkdir -p /var/www/html/kml",
+      );
 
       if (mounted) {
         // setState(() {
@@ -142,6 +170,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         //   _client = client;
         //   _isConnecting = false;
         // });
+
+        setState(() {
+          _isConnecting = false;
+          _connectionStatus = 'Opening tools...';
+        });
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -155,25 +189,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Connection failed: $e';
-        _isConnecting = false;
-        _isConnected = false;
-      });
-    }
+        String reason = e.toString();
+
+        if (reason.contains('SocketException')) {
+          reason = 'Cannot reach the host. Check the IP address and network.';
+        } else if (reason.contains('Handshake')) {
+          reason = 'SSH handshake failed.';
+        } else if (reason.contains('Timeout')) {
+          reason = 'Connection timed out.';
+        } else if (reason.contains('authentication')) {
+          reason = 'Incorrect username or password.';
+        }
+
+        setState(() {
+          _errorMessage = reason;
+          _connectionStatus = '';
+          _isConnecting = false;
+          _isConnected = false;
+        });
+      }
   }
 
   Future<void> _run(SSHClient client, String cmd) async {
-    try {
-      final session = await client.execute(cmd);
-      await session.done;
-    } catch (e) {
-      debugPrint('SSH command error: $e');
-    }
+    print("RUN: $cmd");
+
+    final session = await client.execute(cmd);
+
+    final stdout = await utf8.decodeStream(session.stdout);
+    final stderr = await utf8.decodeStream(session.stderr);
+
+    final exitCode = await session.exitCode;
+    print("Exit: $exitCode");
+
+    print("STDOUT:\n$stdout");
+    print("STDERR:\n$stderr");
   }
 
   Future<void> _flyToVietnam(SSHClient client) async {
     final screens = int.tryParse(_screensController.text) ?? 3;
+
+    setState(() {
+      _connectionStatus = 'Sending startup commands...';
+    });
 
     print('Preparing to send flyTo.kml to LG...');
 
@@ -195,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Trigger flyTo on each screen via query.txt
     for (int i = 1; i <= screens; i++) {
       await _run(client,
-        "ssh -o StrictHostKeyChecking=no lg$i@lg$i "
+        "sshpass -p lg ssh -o StrictHostKeyChecking=no lg$i@lg$i "
         "'echo \"http://lg1:81/kml/flyTo.kml\" > /tmp/query.txt'");
     }
     print('Fly to Vietnam command sent to $screens screens.');
@@ -203,6 +260,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // send logo
   Future<void> _sendLogo(SSHClient client) async {
+    // setState(() {
+    //   _connectionStatus = 'Uploading logo...';
+    // });
+
     final int screens = int.tryParse(_screensController.text) ?? 3;
     final int leftMostScreen = (screens ~/ 2) + 2;
 
@@ -296,12 +357,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.check,
                     size: 14,
-                    color: widget.isConnected
+                    color: _isConnected
                         ? const Color(0xFF2E7D32)
                         : Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    widget.isConnected ? 'Connected' : 'Not Connected',
+                    _isConnected ? 'Connected' : 'Not Connected',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -394,6 +455,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ],
+
+              // Show connectivity message
+              if (_connectionStatus.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    _connectionStatus,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 28),
 

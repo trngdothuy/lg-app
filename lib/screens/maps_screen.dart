@@ -7,9 +7,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 // import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'species_data.dart';
-import 'species_service.dart';
-import 'lg_kml_service.dart';
+import '../data/species_data.dart';
+import '../models/species.dart';
+
+import '../services/species_service.dart';
+// import '../services/kml_service.dart';
+import '../services/lg_service.dart';
 
 class MapsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -34,10 +37,29 @@ class _MapsScreenState extends State<MapsScreen> {
   final Completer<GoogleMapController> _mapCtrl = Completer();
   // final GoogleMapsFlutterPlatform mapsImplementation = GoogleMapsFlutterPlatform.instance;
   
-  static const _initCamera = CameraPosition(
-    target: LatLng(14.0, 108.0), // centre of Vietnam
-    zoom: 5.5,
+  CameraPosition get _initCamera {
+  if (vietnamSpecies.isEmpty) {
+    return const CameraPosition(
+      target: LatLng(14.0, 108.0),
+      zoom: 5.5,
+    );
+  }
+
+  final avgLat = vietnamSpecies
+          .map((s) => s.lat)
+          .reduce((a, b) => a + b) /
+      vietnamSpecies.length;
+
+  final avgLng = vietnamSpecies
+          .map((s) => s.lng)
+          .reduce((a, b) => a + b) /
+      vietnamSpecies.length;
+
+  return CameraPosition(
+    target: LatLng(avgLat, avgLng),
+    zoom: 6,
   );
+}
   bool _isDark = false;
   Set<Marker> _markers = {};
 
@@ -64,7 +86,7 @@ class _MapsScreenState extends State<MapsScreen> {
 
   // ── Services ──────────────────────────────────────────────────
   final SpeciesService _svc = SpeciesService();
-  LgKmlService? _lg;
+  LGService? _lg;
 
   // ─────────────────────────────────────────────────────────────
   @override
@@ -73,12 +95,15 @@ class _MapsScreenState extends State<MapsScreen> {
     // _speech = stt.SpeechToText();
     _buildMarkers(_filtered);
 
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fitAllMarkers();
+    });
+
     if (widget.isConnected && widget.client != null) {
-      _lg = LgKmlService(
+      _lg = LGService(
         client:  widget.client!,
         host:    widget.host,
-        screens: widget.screens,
-      );
+        screens: widget.screens,      );
       _initLg();
     }
   }
@@ -94,11 +119,9 @@ class _MapsScreenState extends State<MapsScreen> {
   // ── LG init ───────────────────────────────────────────────────
   Future<void> _initLg() async {
     try {
-      await _lg!.uploadAssets((path) async {
-        final data = await rootBundle.load(path);
-        return data.buffer.asUint8List();
-      });
-      await _lg!.sendSpinningGlobe(vietnamSpecies);
+      await _lg?.initialize(
+          vietnamSpecies,
+      );
     } catch (e) {
       debugPrint('[Maps] LG init error: $e');
     }
@@ -118,6 +141,38 @@ class _MapsScreenState extends State<MapsScreen> {
         onTap: () => _onMarkerTap(s),
       )).toSet();
     });
+  }
+
+  // Fit camera to all species markers
+  Future<void> _fitAllMarkers() async {
+    if (_markers.isEmpty) return;
+
+    final controller = await _mapCtrl.future;
+
+    double minLat = _markers.first.position.latitude;
+    double maxLat = minLat;
+    double minLng = _markers.first.position.longitude;
+    double maxLng = minLng;
+
+    for (final marker in _markers) {
+      final lat = marker.position.latitude;
+      final lng = marker.position.longitude;
+
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+    }
+
+    await controller.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        ),
+        80,
+      ),
+    );
   }
 
   // ── Marker tap → pipeline ────────────────────────────────────
@@ -152,13 +207,10 @@ class _MapsScreenState extends State<MapsScreen> {
       await _speakText(story.ttsScript);
 
       // Full LG display
-      await _lg?.sendSpeciesDisplay(
-        species:     species,
-        geminiStory: story.narrative,
-        ttsScript:   story.ttsScript,
-        iucnData:    story.iucnFields,
-        mode:        'initial',
-      );
+      await _lg?.showSpecies(
+        species,
+        story,
+      );   
     } catch (e) {
       debugPrint('[Maps] Pipeline error: $e');
       if (mounted) setState(() => _loadingStory = false);
@@ -172,12 +224,9 @@ class _MapsScreenState extends State<MapsScreen> {
       'Travelling back in time for ${_selected!.commonName}. '
       '${_story!.ttsScript}',
     );
-    await _lg?.sendSpeciesDisplay(
-      species:     _selected!,
-      geminiStory: _story!.narrative,
-      ttsScript:   _story!.ttsScript,
-      iucnData:    _story!.iucnFields,
-      mode:        'history',
+  await _lg?.showHistory(
+    _selected!,
+    _story!,
     );
   }
 
@@ -187,27 +236,47 @@ class _MapsScreenState extends State<MapsScreen> {
       'Looking ahead for ${_selected!.commonName}. '
       'Conservation efforts could still save this species.',
     );
-    await _lg?.sendSpeciesDisplay(
-      species:     _selected!,
-      geminiStory: _story!.narrative,
-      ttsScript:   _story!.ttsScript,
-      iucnData:    _story!.iucnFields,
-      mode:        'ahead',
+    await _lg?.showFuture(
+      _selected!,
+      _story!,
     );
   }
 
   // ── Phone map camera → LG sync (throttled 500 ms) ────────────
+  DateTime _lastSync = DateTime.now();
+  CameraPosition? _lastCamera;
+
   void _onCameraMove(CameraPosition pos) {
-    _camThrottle?.cancel();
-    _camThrottle = Timer(const Duration(milliseconds: 500), () {
-      _lg?.flyTo(
-        lat:      pos.target.latitude,
-        lng:      pos.target.longitude,
-        range:    _zoomToRange(pos.zoom),
-        tilt:     0,
-        duration: 0.8,
-      );
-    });
+    _lastCamera = pos;
+
+    final now = DateTime.now();
+
+    if (now.difference(_lastSync).inMilliseconds < 100) {
+    return;
+    }
+
+    _lastSync = now;
+
+    _lg?.flyTo(
+      lat:      pos.target.latitude,
+      lng:      pos.target.longitude,
+      range:    _zoomToRange(pos.zoom),
+      tilt:     pos.bearing,
+      duration: 0,
+    );
+  }
+
+  void _onCameraIdle() {
+    if (_lastCamera == null) return;
+
+    _lg?.flyTo(
+      lat: _lastCamera!.target.latitude,
+      lng: _lastCamera!.target.longitude,
+      range: _zoomToRange(_lastCamera!.zoom),
+      tilt: _lastCamera!.tilt,
+      heading: _lastCamera!.bearing,
+      duration: 0,
+    );
   }
 
   // ── Search & filter ───────────────────────────────────────────
@@ -298,6 +367,7 @@ class _MapsScreenState extends State<MapsScreen> {
           markers: _markers,
           onMapCreated: (c) => _mapCtrl.complete(c),
           onCameraMove: _onCameraMove,
+          onCameraIdle: _onCameraIdle,
           myLocationButtonEnabled: false,
           zoomControlsEnabled: false,
           mapToolbarEnabled: false,
