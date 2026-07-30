@@ -72,9 +72,109 @@ class _MapsScreenState extends State<MapsScreen> {
   SpeciesStory? _story;
   bool _loadingStory = false;
 
-  // ── Search / filter ───────────────────────────────────────────
+  // Search
   final TextEditingController _searchCtrl = TextEditingController();
-  String _activeFilter = ''; // 'Extinct level' | 'Groups' | 'Places'
+
+  // Active filters
+  String _statusFilter = 'All';
+  String _groupFilter = 'All';
+  String _habitatFilter = 'All';
+  String _regionFilter = 'All';
+
+  // Filter options
+  final statusOptions = [
+    'All',
+    'CR',
+    'EN',
+  ];
+
+  final groupOptions = [
+    'All',
+    'MAMMALIA',
+    'AVES',
+    'REPTILIA',
+    'PISCES',
+    'PLANTAE',
+    'ARTHROPODA',
+  ];
+
+  final habitatOptions = [
+    'All',
+    'Forest',
+    'River',
+    'Wetland',
+    'Ocean',
+    'Coastal',
+    'Grassland',
+    'Mountain',
+  ];
+
+  final regionOptions = [
+    'All',
+    'North',
+    'Central',
+    'South',
+  ];
+
+  // Get region
+  String _getRegion(double lat) {
+      if (lat >= 20) return "North";
+      if (lat >= 15) return "Central";
+      return "South";
+    }
+
+    // Habitat helper
+    bool _matchesHabitat(
+    Species s,
+    String habitat,
+  ) {
+    final text = s.habitat.toLowerCase();
+
+    switch (habitat) {
+      case "Forest":
+        return text.contains("forest");
+
+      case "River":
+        return text.contains("river");
+
+      case "Wetland":
+        return text.contains("wetland");
+
+      case "Ocean":
+        return text.contains("ocean");
+
+      case "Coastal":
+        return text.contains("coast") ||
+              text.contains("coral") ||
+              text.contains("sea");
+
+      case "Grassland":
+        return text.contains("grassland");
+
+      case "Mountain":
+        return text.contains("mountain") ||
+              text.contains("montane") ||
+              text.contains("highland");
+
+      default:
+        return true;
+    }
+  }
+
+    bool _matchesSearch(Species s, String q) {
+      if (q.isEmpty) return true;
+
+      final text = [
+        s.commonName,
+        s.scientificName,
+        s.group,
+        s.category,
+        s.habitat,
+        s.threats,
+      ].join(' ').toLowerCase();
+
+      return text.contains(q);
+    }
 
   // ── Voice ─────────────────────────────────────────────────────
   // late stt.SpeechToText _speech;
@@ -283,39 +383,40 @@ class _MapsScreenState extends State<MapsScreen> {
   void _applyFilters() {
     final q = _searchCtrl.text.trim().toLowerCase();
 
-    var list = vietnamSpecies.where((s) {
-      if (q.isEmpty) return true;
+    final list = vietnamSpecies.where((s) {
 
-      final searchable = [
-        s.commonName,
-        s.scientificName,
-        s.group,
-        s.category,
-        s.habitat,
-        s.threats,
-      ].join(' ').toLowerCase();
+      if (!_matchesSearch(s, q))
+        return false;
 
-      return searchable.contains(q);
+      if (_statusFilter != "All" &&
+          s.category != _statusFilter)
+        return false;
+
+      if (_groupFilter != "All" &&
+          s.group != _groupFilter)
+        return false;
+
+      if (_habitatFilter != "All" &&
+          !_matchesHabitat(s, _habitatFilter))
+        return false;
+
+      if (_regionFilter != "All" &&
+          _getRegion(s.lat) != _regionFilter)
+        return false;
+
+      return true;
+
     }).toList();
-
-    if (_activeFilter == 'Extinct level') {
-      list = list.where((s) => s.category == 'CR').toList();
-    } else if (_activeFilter == 'Groups') {
-      list.sort((a, b) => a.group.compareTo(b.group));
-    } else if (_activeFilter == 'Places') {
-      list.sort((a, b) => a.lat.compareTo(b.lat));
-    }
 
     setState(() {
       _filtered = list;
     });
 
     _buildMarkers(list);
-  }
 
-  void _toggleFilter(String f) {
-    setState(() => _activeFilter = _activeFilter == f ? '' : f);
-    _applyFilters();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fitAllMarkers();
+    });
   }
 
   // ── Voice search ──────────────────────────────────────────────
@@ -456,7 +557,7 @@ class _MapsScreenState extends State<MapsScreen> {
                         onChanged: (_) => _applyFilters(),
                         style: const TextStyle(fontSize: 14),
                         decoration: const InputDecoration(
-                          hintText: 'Enter name of species..',
+                          hintText: 'Search species, habitat, threats, group,...',
                           hintStyle: TextStyle(
                               color: Colors.black38, fontSize: 14),
                           border: InputBorder.none,
@@ -513,7 +614,7 @@ class _MapsScreenState extends State<MapsScreen> {
                         ),
                         title: Text(s.commonName),
                         subtitle: Text(
-                          "${s.scientificName}\n${s.group}",
+                          "${s.scientificName}\n${_categoryLabel(s.category)} • ${s.group}",
                           maxLines: 2,
                         ),
                         isThreeLine: true,
@@ -543,6 +644,18 @@ class _MapsScreenState extends State<MapsScreen> {
                   ),
                 ),
 
+                // Count result
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "Showing ${_filtered.length} of ${vietnamSpecies.length} species",
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+
               const SizedBox(height: 10),
 
               // Filter chips
@@ -550,13 +663,57 @@ class _MapsScreenState extends State<MapsScreen> {
                 padding: const EdgeInsets.only(left: 12),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                    _chip('Extinct level'),
-                    const SizedBox(width: 8),
-                    _chip('Groups'),
-                    const SizedBox(width: 8),
-                    _chip('Places'),
-                  ]),
+                  child: Row(
+                    children: [
+
+                      _filterChip(
+                        title: "Status",
+                        value: _statusFilter,
+                        values: statusOptions,
+                        onChanged: (v) {
+                          setState(() => _statusFilter = v);
+                          _applyFilters();
+                        },
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      _filterChip(
+                        title: "Group",
+                        value: _groupFilter,
+                        values: groupOptions,
+                        onChanged: (v) {
+                          setState(() => _groupFilter = v);
+                          _applyFilters();
+                        },
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      _filterChip(
+                        title: "Habitat",
+                        value: _habitatFilter,
+                        values: habitatOptions,
+                        onChanged: (v) {
+                          setState(() => _habitatFilter = v);
+                          _applyFilters();
+                        },
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      _filterChip(
+                        title: "Region",
+                        value: _regionFilter,
+                        values: regionOptions,
+                        onChanged: (v) {
+                          setState(() => _regionFilter = v);
+                          _applyFilters();
+                        },
+                      ),
+
+                    ],
+                  )
                 ),
               ),
             ],
@@ -614,29 +771,47 @@ class _MapsScreenState extends State<MapsScreen> {
     );
   }
 
-  Widget _chip(String label) {
-    final active = _activeFilter == label;
-    return GestureDetector(
-      onTap: () => _toggleFilter(label),
+  Widget _filterChip({
+    required String title,
+    required String value,
+    required List<String> values,
+    required ValueChanged<String> onChanged,
+  }) {
+    return PopupMenuButton<String>(
+      onSelected: onChanged,
+      itemBuilder: (_) => values
+          .map(
+            (v) => PopupMenuItem(
+              value: v,
+              child: Text(v),
+            ),
+          )
+          .toList(),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 8,
+        ),
         decoration: BoxDecoration(
-          color: active
-              ? const Color(0xFF333333)
-              : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 4)
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+            ),
           ],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: active ? Colors.white : Colors.black87,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "$title • $value",
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_drop_down),
+          ],
         ),
       ),
     );
