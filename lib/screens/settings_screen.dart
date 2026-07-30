@@ -5,6 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../providers/nav_bar_provider.dart';
 import 'tools_screen.dart';
+import 'home_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -98,6 +99,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // Disconnect
+  Future<void> _disconnect() async {
+    setState(() {
+      _client = null;
+      _isConnected = false;
+      _connectionStatus = '';
+    });
+
+     Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HomeScreen(),
+      ),
+    );
+  }
+
   // Connect to LG via SSH
   Future<void> _connect() async {
     final host = _hostController.text.trim();
@@ -172,6 +189,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // });
 
         setState(() {
+          _client = client;
+          _isConnected = true;
           _isConnecting = false;
           _connectionStatus = 'Opening tools...';
         });
@@ -366,7 +385,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: widget.isConnected
+                      color: _isConnected
                           ? const Color(0xFF2E7D32)
                           : Colors.grey,
                     ),
@@ -478,9 +497,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: SizedBox(
                   width: 200,
                   child: ElevatedButton(
-                    onPressed: _isConnecting ? null : _connect,
+                    onPressed: _isConnected ? _disconnect : _connect,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A7C59),
+                      backgroundColor: _isConnected ? Colors.grey : const Color(0xFF4A7C59),
                       foregroundColor: Colors.white,
                       disabledBackgroundColor:
                           const Color(0xFF4A7C59).withOpacity(0.5),
@@ -503,7 +522,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text('Connect to LG'),
+                        : Text(
+                          _isConnected ? "Disconnect" : 'Connect to LG',
+                          ),
                   ),
                 ),
               ),

@@ -497,40 +497,33 @@ class _MapsScreenState extends State<MapsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-
-              // Connected badge
-              if (widget.isConnected)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 14, top: 6),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.93),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 6)
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check,
-                            size: 14, color: Color(0xFF2E7D32)),
-                        SizedBox(width: 4),
-                        Text(
-                          'Connected',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2E7D32),
-                          ),
-                        ),
-                      ],
+              
+            // ── Connected badge (top right) ──────────────────────
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 20, top: 12),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.check,
+                    size: 14,
+                    color: widget.isConnected
+                        ? const Color(0xFF2E7D32)
+                        : Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.isConnected
+                    ? 'Connected' : 'Not Connected',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: widget.isConnected
+                          ? const Color(0xFF2E7D32)
+                          : Colors.grey,
                     ),
                   ),
-                ),
+                ]),
+              ),
+            ),
 
               const SizedBox(height: 6),
 

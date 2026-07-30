@@ -4,7 +4,7 @@
 // Screen layout (screens=3): lg3=left logos | lg2=centre           | lg1=right info
 import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
-import '../models/species_data.dart';
+import '../models/species.dart';
 
 class LgKmlService {
   final SSHClient client;
