@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'settings_screen.dart';
-import '../../providers/nav_bar_provider.dart';
+import '../providers/nav_bar_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -36,19 +36,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _screens = widget.screens;
   }
 
-  void _openSettings() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SettingsScreen(
-          // client: _client,
-          // host: _host,
-          // screens: _screens,
-          // isConnected: _isConnected,
-        ),
+ void _openSettings() {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SettingsScreen(
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: _openSettings,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2A2A2A),
-                    side: const BorderSide(color: Color(0xFFCCCCCC)),
-                    backgroundColor: Colors.green,
+                    side: BorderSide(
+                      color: _isConnected
+                          ? Colors.grey.shade300
+                          : Colors.green.shade300,
+                    ),
+                    backgroundColor: 
+                      _isConnected ? Colors.grey : Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -159,7 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  child: const Text('Connect'),
+                  child: Text(
+                    _isConnected ? 'Disconnect' : 'Connect',
+                  ),
                 ),
               ),
 
