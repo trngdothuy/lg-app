@@ -46,6 +46,13 @@ class AppBottomNav extends StatelessWidget {
           isConnected: isConnected,
         );
         break;
+      case 2:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Chat coming soon"),
+          ),
+        );
+        return;
       case 3:
         target = ToolsScreen(
           client: client,
@@ -66,9 +73,9 @@ class AppBottomNav extends StatelessWidget {
         return; // Maps/Chat not yet implemented
     }
 
-    Navigator.pushReplacement(
-      context,
+    Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => target),
+      (route) => false,
     );
   }
 

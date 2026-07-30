@@ -9,10 +9,10 @@ import 'package:flutter_tts/flutter_tts.dart';
 // import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../data/species_data.dart';
 import '../models/species.dart';
-
 import '../services/species_service.dart';
 // import '../services/kml_service.dart';
 import '../services/lg_service.dart';
+import '../providers/nav_bar_provider.dart';
 
 class MapsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -767,7 +767,14 @@ class _MapsScreenState extends State<MapsScreen> {
 
       ]),
 
-      bottomNavigationBar: const _MapsBottomNav(),
+      bottomNavigationBar: AppBottomNav(
+        selectedIndex: 1,
+        client: widget.client,
+        host: widget.host,
+        screens: widget.screens,
+        isConnected: widget.isConnected,
+        isDark: _isDark,
+      ),
     );
   }
 
@@ -1092,72 +1099,6 @@ class _PillButton extends StatelessWidget {
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Bottom nav — Maps tab active ──────────────────────────────────
-class _MapsBottomNav extends StatelessWidget {
-  const _MapsBottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    const labels = ['Home', 'Maps', 'Chat', 'Tools', 'Settings'];
-    const active = 1;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            children: List.generate(labels.length, (i) {
-              final sel = i == active;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    if (i == 0) Navigator.pop(context);
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (sel)
-                        Container(
-                          width: 28,
-                          height: 2.5,
-                          margin: const EdgeInsets.only(bottom: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2A2A2A),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        )
-                      else
-                        const SizedBox(height: 6.5),
-                      Text(
-                        labels[i],
-                        style: TextStyle(
-                          color: sel
-                              ? const Color(0xFF1A1A1A)
-                              : const Color(0xFF999999),
-                          fontSize: 12,
-                          fontWeight: sel
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
           ),
         ),
       ),
