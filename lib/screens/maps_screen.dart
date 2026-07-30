@@ -281,12 +281,21 @@ class _MapsScreenState extends State<MapsScreen> {
 
   // ── Search & filter ───────────────────────────────────────────
   void _applyFilters() {
-    final q = _searchCtrl.text.toLowerCase().trim();
+    final q = _searchCtrl.text.trim().toLowerCase();
 
     var list = vietnamSpecies.where((s) {
       if (q.isEmpty) return true;
-      return s.commonName.toLowerCase().contains(q) ||
-             s.scientificName.toLowerCase().contains(q);
+
+      final searchable = [
+        s.commonName,
+        s.scientificName,
+        s.group,
+        s.category,
+        s.habitat,
+        s.threats,
+      ].join(' ').toLowerCase();
+
+      return searchable.contains(q);
     }).toList();
 
     if (_activeFilter == 'Extinct level') {
@@ -294,10 +303,13 @@ class _MapsScreenState extends State<MapsScreen> {
     } else if (_activeFilter == 'Groups') {
       list.sort((a, b) => a.group.compareTo(b.group));
     } else if (_activeFilter == 'Places') {
-      list.sort((a, b) => a.lat.compareTo(b.lat)); // south → north
+      list.sort((a, b) => a.lat.compareTo(b.lat));
     }
 
-    _filtered = list;
+    setState(() {
+      _filtered = list;
+    });
+
     _buildMarkers(list);
   }
 
@@ -469,6 +481,67 @@ class _MapsScreenState extends State<MapsScreen> {
                   ]),
                 ),
               ),
+
+              // Dropdown under search box
+              if (_searchCtrl.text.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  constraints: const BoxConstraints(maxHeight: 250),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                      )
+                    ],
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _filtered.length,
+                    itemBuilder: (context, index) {
+                      final s = _filtered[index];
+
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.location_on,
+                          color: s.category == "CR"
+                              ? Colors.red
+                              : Colors.orange,
+                        ),
+                        title: Text(s.commonName),
+                        subtitle: Text(
+                          "${s.scientificName}\n${s.group}",
+                          maxLines: 2,
+                        ),
+                        isThreeLine: true,
+                        onTap: () async {
+                          _searchCtrl.text = s.commonName;
+
+                          setState(() {
+                            _filtered = [s];
+                          });
+
+                          _buildMarkers([s]);
+
+                          final controller = await _mapCtrl.future;
+                          controller.animateCamera(
+                            CameraUpdate.newLatLngZoom(
+                              LatLng(s.lat, s.lng),
+                              8,
+                            ),
+                          );
+
+                          _onMarkerTap(s);
+
+                          FocusScope.of(context).unfocus();
+                        },
+                      );
+                    },
+                  ),
+                ),
 
               const SizedBox(height: 10),
 
