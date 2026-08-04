@@ -347,21 +347,28 @@ class _MapsScreenState extends State<MapsScreen> {
   CameraPosition? _lastCamera;
 
   void _onCameraMove(CameraPosition pos) {
+    print(
+      "MOVE ${pos.target.latitude}, ${pos.target.longitude}, ${pos.zoom}");
+
     _lastCamera = pos;
 
     final now = DateTime.now();
 
-    if (now.difference(_lastSync).inMilliseconds < 100) {
+    const syncInterval = Duration(milliseconds: 400);
+
+    if (now.difference(_lastSync) < syncInterval) {
     return;
     }
 
     _lastSync = now;
 
+    print('LG instance: $_lg, isConnected: ${widget.isConnected}');
     _lg?.flyTo(
       lat:      pos.target.latitude,
       lng:      pos.target.longitude,
       range:    _zoomToRange(pos.zoom),
-      tilt:     pos.bearing,
+      tilt:     pos.tilt,
+      heading: pos.bearing,
       duration: 0,
     );
   }
@@ -417,6 +424,9 @@ class _MapsScreenState extends State<MapsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fitAllMarkers();
     });
+
+    _buildMarkers(list);
+    _lg?.updateMarkers(list); // keep the rig's paws matching the phone's filter
   }
 
   // ── Voice search ──────────────────────────────────────────────

@@ -5,14 +5,16 @@
     <gx:duration>0.5</gx:duration>
 		<gx:flyToMode>smooth</gx:flyToMode>
     <Placemark>
-      <name>Hanoi</name>
+      <name>Vietnam</name>
       <LookAt>
-        <longitude>105.8342</longitude>
-        <latitude>21.0278</latitude>
-        <range>5000000</range>
+        <longitude>105.8</longitude>
+        <latitude>15.9</latitude>
+        <range>4000000</range>
+        <tilt>0</tilt>
+        <heading>0</heading>
       </LookAt>
       <Point>
-        <coordinates>105.8342,21.0278,0</coordinates>
+        <coordinates>105.8,15.9,0</coordinates>
       </Point>
     </Placemark>
 

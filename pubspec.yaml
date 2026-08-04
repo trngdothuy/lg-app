@@ -72,9 +72,11 @@ flutter:
     - .env
     - assets/kml/pyramid.kml
     - assets/kml/flyTo.kml
+    - assets/kml/paws/redPaw.dae
     - assets/logo/logo_liquid_galaxy.jpg
     - assets/logo/logo_gdg_lleida.png
     - assets/logo/logo_red_list.png
+    - assets/logo/paw.png
     - assets/avatar/avatar.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see

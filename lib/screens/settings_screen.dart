@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:red_list_endangered_species_vietnam_app/services/lg_service.dart';
 import '../../providers/nav_bar_provider.dart';
 import 'tools_screen.dart';
 import 'home_screen.dart';
@@ -38,6 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _errorMessage = '';
   late bool _isConnected; // update from SSH connection state
   late SSHClient? _client; // store the SSH client for later use
+  LGService? _lg;
 
   @override
   void initState() {
@@ -142,6 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // return;
 
     try {
+      
       final socket = await SSHSocket.connect(host, port);
       final client = SSHClient(
         socket,
@@ -158,10 +161,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _flyToVietnam(client);
       // await _setRefresh(client);
       // await Future.delayed(const Duration(seconds: 5));
+      
       setState(() {
         _connectionStatus = 'Uploading logo...';
       });
       await _sendLogo(client);
+
+      setState(() {
+        _connectionStatus = 'Uploading species markers...';
+      });
+
+      final lg = LGService(client: client, host: host, screens: screens);
+      await lg.uploadPawModel();
+      await lg.uploadPawIcon();
 
       await Future.delayed(
         const Duration(seconds: 1),
@@ -305,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               </Icon>
               <overlayXY x="0" y="1" xunits="fraction" yunits="fraction"/>
               <screenXY x="0.02" y="0.95" xunits="fraction" yunits="fraction"/>
-              <size x="500" y="0" xunits="pixels" yunits="pixels"/>
+              <size x="300" y="0" xunits="pixels" yunits="pixels"/>
           </ScreenOverlay>
       </Document>
   </kml>''';

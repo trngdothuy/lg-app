@@ -1,376 +1,117 @@
-// import '../models/species.dart';
-// import 'species_service.dart';
-
-// class KmlService {
-//   static const String _kmlHeader = '''
-// <?xml version="1.0" encoding="UTF-8"?>
-// <kml xmlns="http://www.opengis.net/kml/2.2">
-// <Document>
-// ''';
-
-//   static const String _kmlFooter = '''
-// </Document>
-// </kml>
-// ''';
-
-//   /// ============================================================
-//   /// Permanent paw markers
-//   /// ============================================================
-
-//   static String buildMarkersKml(List<Species> species) {
-//     final buffer = StringBuffer();
-
-//     buffer.write(_kmlHeader);
-
-//     buffer.writeln('''
-// <Style id="paw">
-//   <IconStyle>
-//     <scale>1.2</scale>
-//     <Icon>
-//       <href>http://lg1:81/images/paw.png</href>
-//     </Icon>
-//   </IconStyle>
-// </Style>
-// ''');
-
-//     for (final s in species) {
-//       buffer.writeln('''
-// <Placemark>
-
-// <name>${s.commonName}</name>
-
-// <styleUrl>#paw</styleUrl>
-
-// <Point>
-// <coordinates>${s.lng},${s.lat},0</coordinates>
-// </Point>
-
-// </Placemark>
-// ''');
-//     }
-
-//     buffer.write(_kmlFooter);
-
-//     return buffer.toString();
-//   }
-
-//   /// ============================================================
-//   /// Right screen overlay
-//   /// ============================================================
-
-//   static String buildRightOverlayKml() {
-//     return '''
-// $_kmlHeader
-
-// <ScreenOverlay>
-
-// <name>Species Card</name>
-
-// <Icon>
-
-// <href>http://lg1:81/species.html</href>
-
-// </Icon>
-
-// <overlayXY
-// x="0"
-// y="1"
-// xunits="fraction"
-// yunits="fraction"/>
-
-// <screenXY
-// x="0"
-// y="1"
-// xunits="fraction"
-// yunits="fraction"/>
-
-// <size
-// x="100%"
-// y="100%"
-// xunits="fraction"
-// yunits="fraction"/>
-
-// </ScreenOverlay>
-
-// $_kmlFooter
-// ''';
-//   }
-
-//   /// ============================================================
-//   /// HTML page
-//   /// ============================================================
-
-//   static String buildSpeciesHtml(
-//     Species species,
-//     SpeciesStory story,
-//   ) {
-//     return '''
-// <!DOCTYPE html>
-
-// <html>
-
-// <head>
-
-// <meta charset="utf-8">
-
-// <style>
-
-// body{
-
-// margin:0;
-// padding:40px;
-
-// background:#0E1B25;
-
-// color:white;
-
-// font-family:Arial;
-
-// }
-
-// img{
-
-// width:300px;
-
-// border-radius:12px;
-
-// display:block;
-
-// margin:auto;
-
-// }
-
-// h1{
-
-// font-size:42px;
-
-// margin-top:20px;
-
-// }
-
-// .status{
-
-// font-size:24px;
-
-// font-weight:bold;
-
-// color:${species.category=="CR" ? "#C62828" : "#EF6C00"};
-
-// }
-
-// .story{
-
-// margin-top:25px;
-
-// font-size:24px;
-
-// line-height:1.6;
-
-// }
-
-// .footer{
-
-// margin-top:40px;
-
-// font-size:18px;
-
-// opacity:.8;
-
-// }
-
-// </style>
-
-// </head>
-
-// <body>
-
-// <img src="http://lg1:81/images/${species.id}.png">
-
-// <h1>${species.commonName}</h1>
-
-// <div><i>${species.scientificName}</i></div>
-
-// <div class="status">
-
-// ${species.category=="CR"
-// ? "Critically Endangered"
-// : "Endangered"}
-
-// </div>
-
-// <div class="story">
-
-// ${story.narrative}
-
-// </div>
-
-// <div class="footer">
-
-// IUCN Red List
-
-// </div>
-
-// </body>
-
-// </html>
-// ''';
-//   }
-// }
-
+import 'dart:convert';
 import '../models/species.dart';
-
-// class KmlService {
-
-//   /// Main KML shown on Google Earth
-//   static String buildSpeciesKml(List<Species> species) {
-//     final b = StringBuffer();
-
-//     b.writeln('<?xml version="1.0" encoding="UTF-8"?>');
-//     b.writeln('<kml xmlns="http://www.opengis.net/kml/2.2">');
-//     b.writeln('<Document>');
-
-//     for (final s in species) {
-//       b.writeln(_pawPlacemark(s));
-//     }
-
-//     b.writeln('</Document>');
-//     b.writeln('</kml>');
-
-//     return b.toString();
-//   }
-
-//   static String _pawPlacemark(Species s) => '''
-// <Placemark>
-
-// <name>${s.commonName}</name>
-
-// <Style>
-
-// <IconStyle>
-
-// <scale>1.4</scale>
-
-// <Icon>
-
-// <href>http://lg1:81/paws/${s.id}.png</href>
-
-// </Icon>
-
-// </IconStyle>
-
-// </Style>
-
-// <Point>
-
-// <coordinates>${s.lng},${s.lat},0</coordinates>
-
-// </Point>
-
-// </Placemark>
-// ''';
-
-//   /// HTML page shown on right screen
-//   static String buildHtmlCard({
-//     required Species species,
-//     required String html,
-//   }) {
-
-//     return '''
-// <!DOCTYPE html>
-
-// <html>
-
-// <head>
-
-// <meta charset="utf-8">
-
-// <style>
-
-// body{
-
-// background:#101010;
-
-// font-family:Arial;
-
-// color:white;
-
-// padding:40px;
-
-// }
-
-// h1{
-
-// font-size:38px;
-
-// }
-
-// img{
-
-// width:260px;
-
-// display:block;
-
-// margin:auto;
-
-// }
-
-// </style>
-
-// </head>
-
-// <body>
-
-// <img src="http://lg1:81/paws/${species.id}.png">
-
-// $html
-
-// </body>
-
-// </html>
-// ''';
-//   }
-
-// }
-
-// import '../data/species_data.dart';
+import 'species_service.dart';
 
 class KmlService {
-  static String buildSpeciesKml(List<Species> species) {
-    final b = StringBuffer();
+  static String _escape(String s) => s
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
 
+  // ── Persistent paw markers ──────────
+  static String buildPawIconsKml(
+    List<Species> species, {
+    String iconHref = 'http://lg1:81/images/paw.png',
+  }) {
+    final b = StringBuffer();
     b.writeln('<?xml version="1.0" encoding="UTF-8"?>');
     b.writeln('<kml xmlns="http://www.opengis.net/kml/2.2">');
-    b.writeln('<Document>');
+    b.writeln('<Document><name>Species Paw Markers</name>');
+    b.writeln('''
+  <Style id="pawIcon">
+    <IconStyle>
+      <scale>1.2</scale>
+      <Icon><href>$iconHref</href></Icon>
+    </IconStyle>
+    <LabelStyle>
+      <scale>0</scale>
+    </LabelStyle>
+  </Style>''');
 
     for (final s in species) {
       b.writeln('''
-<Placemark>
-  <name>${s.commonName}</name>
-  <Point>
-    <coordinates>${s.lng},${s.lat},0</coordinates>
-  </Point>
-</Placemark>
-''');
+  <Placemark>
+    <name>${_escape(s.commonName)}</name>
+    <styleUrl>#pawIcon</styleUrl>
+    <Point>
+      <coordinates>${s.lng},${s.lat},0</coordinates>
+    </Point>
+  </Placemark>''');
     }
 
-    b.writeln('</Document>');
-    b.writeln('</kml>');
-
+    b.writeln('</Document></kml>');
     return b.toString();
   }
 
-  static String buildHtmlCard({
-    required Species species,
-    required String html,
+  // ── Camera sync ──────────────────────────────────────────────
+  static String buildFlyTo({
+    required double lat,
+    required double lng,
+    required double range,
+    required double tilt,
+    required double heading,
   }) {
     return '''
-<!DOCTYPE html>
-<html>
-<body>
-<h2>${species.commonName}</h2>
-$html
-</body>
-</html>
-''';
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<LookAt>
+  <longitude>$lng</longitude>
+  <latitude>$lat</latitude>
+  <range>$range</range>
+  <tilt>$tilt</tilt>
+  <heading>$heading</heading>
+</LookAt>
+</Document>
+</kml>''';
+  }
+
+  // ── Species info balloon shown on flyTo ─────────────────────────
+  // Uses gx:balloonVisibility to auto-open, which is the standard LG
+  // technique for showing rich info without a separate ScreenOverlay
+  // image. Test on your actual rig — balloon auto-open support can
+  // vary slightly by the Earth build LG ships.
+  static String buildSpeciesInfoKml(
+    Species species,
+    SpeciesStory story, {
+    String title = '',
+  }) {
+    final heading = title.isEmpty
+        ? _categoryLabel(species.category)
+        : title;
+
+    return '''
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+<Document>
+<Placemark>
+  <name>${_escape(species.commonName)}</name>
+  <description><![CDATA[
+    ${_infoHtml(species, story, heading)}
+  ]]></description>
+  <gx:balloonVisibility>1</gx:balloonVisibility>
+  <Point><coordinates>${species.lng},${species.lat},0</coordinates></Point>
+</Placemark>
+</Document>
+</kml>''';
+  }
+
+  static String _categoryLabel(String c) =>
+      c == 'CR' ? 'Critically Endangered' : 'Endangered';
+
+  static String _infoHtml(Species s, SpeciesStory story, String heading) {
+    return '''
+<div style="font-family:Arial;max-width:340px;background:#0E1B25;
+            color:white;padding:16px;border-radius:8px;">
+  <h2 style="margin:0 0 4px 0;">${_escape(s.commonName)}</h2>
+  <div style="font-style:italic;opacity:.7;margin-bottom:8px;">
+    ${_escape(s.scientificName)}
+  </div>
+  <div style="font-weight:bold;color:${s.category == "CR" ? "#EF5350" : "#FFA726"};
+              margin-bottom:10px;">
+    $heading
+  </div>
+  <div style="line-height:1.5;">${_escape(story.narrative)}</div>
+</div>''';
   }
 }
