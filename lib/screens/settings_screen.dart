@@ -7,6 +7,7 @@ import 'package:red_list_endangered_species_vietnam_app/services/lg_service.dart
 import '../../providers/nav_bar_provider.dart';
 import 'tools_screen.dart';
 import 'home_screen.dart';
+import '../data/species_data.dart';
 
 class SettingsScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -174,6 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final lg = LGService(client: client, host: host, screens: screens);
       await lg.uploadPawModel();
       await lg.uploadPawIcon();
+      await lg.uploadSpeciesImages(vietnamSpecies);
 
       await Future.delayed(
         const Duration(seconds: 1),

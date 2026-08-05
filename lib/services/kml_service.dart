@@ -75,6 +75,7 @@ class KmlService {
     Species species,
     SpeciesStory story, {
     String title = '',
+    String? imageUrl,
   }) {
     final heading = title.isEmpty
         ? _categoryLabel(species.category)
@@ -87,7 +88,7 @@ class KmlService {
 <Placemark>
   <name>${_escape(species.commonName)}</name>
   <description><![CDATA[
-    ${_infoHtml(species, story, heading)}
+    ${_infoHtml(species, story, heading, imageUrl)}
   ]]></description>
   <gx:balloonVisibility>1</gx:balloonVisibility>
   <Point><coordinates>${species.lng},${species.lat},0</coordinates></Point>
@@ -99,10 +100,15 @@ class KmlService {
   static String _categoryLabel(String c) =>
       c == 'CR' ? 'Critically Endangered' : 'Endangered';
 
-  static String _infoHtml(Species s, SpeciesStory story, String heading) {
+  static String _infoHtml(Species s, SpeciesStory story, String heading, String? imageUrl) {
+    final imageTag = imageUrl != null
+        ? '<img src="$imageUrl" style="width:100%;border-radius:8px;margin-bottom:8px;">'
+        : '';
+    
     return '''
 <div style="font-family:Arial;max-width:340px;background:#0E1B25;
             color:white;padding:16px;border-radius:8px;">
+  $imageTag
   <h2 style="margin:0 0 4px 0;">${_escape(s.commonName)}</h2>
   <div style="font-style:italic;opacity:.7;margin-bottom:8px;">
     ${_escape(s.scientificName)}
@@ -111,7 +117,7 @@ class KmlService {
               margin-bottom:10px;">
     $heading
   </div>
-  <div style="line-height:1.5;">${_escape(story.narrative)}</div>
+  <div style="line-height:1.5;">${story.narrative}</div>
 </div>''';
   }
 }

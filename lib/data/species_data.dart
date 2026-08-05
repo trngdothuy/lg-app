@@ -236,7 +236,7 @@ const List<Species> vietnamSpecies = [
   // ── BIRDS ────────────────────────────────────────────────────
   Species(
     assessmentId: 21247822, internalTaxonId: 21247820,
-    scientificName: 'Bertia cambojiensis', commonName: 'Cambodian Tailorbird',
+    scientificName: 'Bertia cambojiensis', commonName: 'Bertia cambojiensis',
     category: 'EN', group: 'AVES', lat: 11.30, lng: 106.80,
     habitat: 'Lowland scrub and degraded forest; southern Vietnam near Cambodia border',
     threats: 'Habitat loss to agriculture, very restricted range',
@@ -285,7 +285,7 @@ const List<Species> vietnamSpecies = [
   ),
   Species(
     assessmentId: 223484923, internalTaxonId: 22693225,
-    scientificName: 'Tringa guttifer', commonName: "Nordmann's Greenshank",
+    scientificName: 'Tringa guttifer', commonName: "Spotted Greenshank",
     category: 'EN', group: 'AVES', lat: 10.20, lng: 105.60,
     habitat: 'Coastal mudflats and mangroves; Mekong Delta coast (winter visitor)',
     threats: 'Habitat loss at staging and wintering sites, hunting; <1000 individuals remain',
@@ -294,7 +294,7 @@ const List<Species> vietnamSpecies = [
   // ── INVERTEBRATES ────────────────────────────────────────────
   Species(
     assessmentId: 149768986, internalTaxonId: 21309,
-    scientificName: 'Tachypleus tridentatus', commonName: 'Chinese Horseshoe Crab',
+    scientificName: 'Tachypleus tridentatus', commonName: 'Tri-spine Horseshoe Crab',
     category: 'EN', group: 'ARTHROPODA', lat: 20.50, lng: 107.00,
     habitat: 'Sandy beaches and shallow coastal waters; northern Vietnam coast (Quang Ninh)',
     threats: 'Biomedical harvesting, coastal development destroying breeding beaches',

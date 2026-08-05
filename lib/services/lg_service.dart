@@ -13,6 +13,8 @@ class LGService {
 
   LGService({required this.client, required this.host, required this.screens});
 
+  int get _rightMostScreen => screens ~/ 2 + 1;
+
   bool _flyBusy = false;
   Map<String, dynamic>? _pendingFly;
 
@@ -93,6 +95,34 @@ class LGService {
     );
     await remoteFile.write(Stream.value(bytes));
     await remoteFile.close();
+  }
+
+  // ── One-time bulk upload of species photos ──────────────────
+  // Expects assets named assets/species_images/<species.id>.jpg
+  Future<void> uploadSpeciesImages(List<Species> species) async {
+    await _run('mkdir -p /var/www/html/images/species');
+    final sftp = await client.sftp();
+
+    for (final s in species) {
+      final assetPath = 'assets/species_images/${s.internalTaxonId}.jpg';
+      try {
+        final byteData = await rootBundle.load(assetPath);
+        final bytes = byteData.buffer.asUint8List();
+
+        final remoteFile = await sftp.open(
+          '/var/www/html/images/species/${s.internalTaxonId}.jpg',
+          mode: SftpFileOpenMode.create |
+              SftpFileOpenMode.write |
+              SftpFileOpenMode.truncate,
+        );
+        await remoteFile.write(Stream.value(bytes));
+        await remoteFile.close();
+      } catch (e) {
+        // Don't let one missing photo abort the whole batch —
+        // just log it and move on to the next species.
+        print('No image for ${s.internalTaxonId}, skipping: $e');
+      }
+    }
   }
 
   // ── Paw markers, shown on nav to the map screen ─────────────────
@@ -177,24 +207,24 @@ class LGService {
   Future<void> showSpecies(Species species, SpeciesStory story) async {
     await _writeRemoteFile(
       '/var/www/html/kml/info.kml',
-      KmlService.buildSpeciesInfoKml(species, story),
+      KmlService.buildSpeciesInfoKml(species, story, imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg'),
     );
-    await _sendToScreen(1, 'http://lg1:81/kml/info.kml');
+    await _sendToScreen(_rightMostScreen, 'http://lg1:81/kml/info.kml');
   }
 
   Future<void> showHistory(Species species, SpeciesStory story) async {
     await _writeRemoteFile(
       '/var/www/html/kml/info.kml',
-      KmlService.buildSpeciesInfoKml(species, story, title: 'History'),
+      KmlService.buildSpeciesInfoKml(species, story, title: 'History', imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg'),
     );
-    await _sendToScreen(1, 'http://lg1:81/kml/info.kml');
+    await _sendToScreen(_rightMostScreen, 'http://lg1:81/kml/info.kml');
   }
 
   Future<void> showFuture(Species species, SpeciesStory story) async {
     await _writeRemoteFile(
       '/var/www/html/kml/info.kml',
-      KmlService.buildSpeciesInfoKml(species, story, title: 'Looking Ahead'),
+      KmlService.buildSpeciesInfoKml(species, story, title: 'Future Outlook and Actions', imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg'),
     );
-    await _sendToScreen(1, 'http://lg1:81/kml/info.kml');
+    await _sendToScreen(_rightMostScreen, 'http://lg1:81/kml/info.kml');
   }
 }
