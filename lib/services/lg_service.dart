@@ -1,6 +1,7 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert';
+import 'dart:async';
 import '../models/species.dart';
 import 'species_service.dart';
 import 'kml_service.dart';
@@ -12,13 +13,30 @@ class LGService {
 
   LGService({required this.client, required this.host, required this.screens});
 
+  bool _flyBusy = false;
+  Map<String, dynamic>? _pendingFly;
+
   Future<void> disconnect() async {}
 
   Future<void> _run(String cmd) async {
-    final session = await client.execute(cmd);
-    await utf8.decodeStream(session.stdout);
-    await utf8.decodeStream(session.stderr);
-    await session.exitCode;
+    print("RUN: $cmd");
+    try {
+      final session = await client.execute(cmd).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => throw TimeoutException('SSH command timed out: $cmd'),
+      );
+
+      final stdout = await utf8.decodeStream(session.stdout);
+      final stderr = await utf8.decodeStream(session.stderr);
+      final exitCode = await session.exitCode;
+
+      print("STDOUT: $stdout");
+      print("STDERR: $stderr");
+      print("EXIT: $exitCode");
+    } catch (e) {
+      print("_run() FAILED for '$cmd': $e");
+      rethrow;
+    }
   }
 
   Future<void> _writeRemoteFile(String path, String content) async {
@@ -109,16 +127,50 @@ class LGService {
     double heading = 0,
     int duration = 0,
   }) async {
-    print('flyTo() called: $lat, $lng');
-    final kml = KmlService.buildFlyTo(
-      lat: lat, lng: lng, range: range, tilt: tilt, heading: heading,
-    );
-    await _writeRemoteFile('/var/www/html/kml/flyto.kml', kml);
+    print('flyTo() called: $lat, $lng, busy=$_flyBusy');
 
+    if (_flyBusy) {
+      _pendingFly = {
+        'lat': lat, 'lng': lng, 'range': range,
+        'tilt': tilt, 'heading': heading,
+      };
+      print('flyTo() queued (busy) — will send after current one finishes');
+      return;
+    }
+
+    _flyBusy = true;
+    try {
+      await _doFlyTo(lat: lat, lng: lng, range: range, tilt: tilt, heading: heading);
+      print('flyTo() sent successfully');
+
+      while (_pendingFly != null) {
+        final next = _pendingFly!;
+        _pendingFly = null;
+        print('flyTo() sending queued position: ${next['lat']}, ${next['lng']}');
+        await _doFlyTo(
+          lat: next['lat'], lng: next['lng'], range: next['range'],
+          tilt: next['tilt'], heading: next['heading'],
+        );
+      }
+    } catch (e, st) {
+      print('flyTo() ERROR: $e');
+    } finally {
+      _flyBusy = false;
+    }
+  }
+
+  Future<void> _doFlyTo({
+    required double lat,
+    required double lng,
+    required double range,
+    required double tilt,
+    required double heading,
+  }) async {
+    final kml = KmlService.buildFlyTo(lat: lat, lng: lng, range: range, tilt: tilt, heading: heading);
+    await _writeRemoteFile('/var/www/html/kml/flyto.kml', kml);
     for (int i = 1; i <= screens; i++) {
       await _sendToScreen(i, 'http://lg1:81/kml/flyto.kml');
     }
-    // kmls.txt is intentionally untouched here — the paw layer stays up.
   }
 
   // ── Tap a pin on the phone → rig flies + shows info balloon ─────

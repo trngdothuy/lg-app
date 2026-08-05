@@ -354,7 +354,7 @@ class _MapsScreenState extends State<MapsScreen> {
 
     final now = DateTime.now();
 
-    const syncInterval = Duration(milliseconds: 400);
+    const syncInterval = Duration(milliseconds: 800);
 
     if (now.difference(_lastSync) < syncInterval) {
     return;
