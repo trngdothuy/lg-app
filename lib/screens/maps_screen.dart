@@ -37,6 +37,8 @@ class _MapsScreenState extends State<MapsScreen> {
   final Completer<GoogleMapController> _mapCtrl = Completer();
   // final GoogleMapsFlutterPlatform mapsImplementation = GoogleMapsFlutterPlatform.instance;
   
+  Map<String, String>? _iucnData;
+
   CameraPosition get _initCamera {
   if (vietnamSpecies.isEmpty) {
     return const CameraPosition(
@@ -116,6 +118,15 @@ class _MapsScreenState extends State<MapsScreen> {
     'South',
   ];
 
+  static const Map<String, List<String>> _groupAliases = {
+    'AVES': ['bird', 'birds'],
+    'PISCES': ['fish', 'fishes'],
+    'MAMMALIA': ['mammal', 'mammals'],
+    'REPTILIA': ['reptile', 'reptiles'],
+    'PLANTAE': ['plant', 'plants'],
+    'ARTHROPODA': ['invertebrate', 'invertebrates', 'arthropod'],
+  };
+
   // Get region
   String _getRegion(double lat) {
       if (lat >= 20) return "North";
@@ -171,6 +182,7 @@ class _MapsScreenState extends State<MapsScreen> {
         s.category,
         s.habitat,
         s.threats,
+        ...(_groupAliases[s.group] ?? []),
       ].join(' ').toLowerCase();
 
       return text.contains(q);
@@ -295,11 +307,12 @@ class _MapsScreenState extends State<MapsScreen> {
     // Pipeline: IUCN → Gemini → LG + TTS
     try {
       final iucnData = await _svc.fetchIucnData(species);
-      final story    = await _svc.generateStory(species, iucnData);
+      final story    = await _svc.getStory(species, iucnData);
 
       if (!mounted) return;
       setState(() {
         _story        = story;
+        _iucnData    = iucnData;
         _loadingStory = false;
       });
 
@@ -320,25 +333,31 @@ class _MapsScreenState extends State<MapsScreen> {
   // ── LG action buttons ─────────────────────────────────────────
   Future<void> _onHistoryJourney() async {
     if (_selected == null || _story == null) return;
+    final historyStory = await _svc.getThemedStory(
+      _selected!, _iucnData!, 'history',
+    );
     await _speakText(
       'Travelling back in time for ${_selected!.commonName}. '
-      '${_story!.ttsScript}',
+      '${historyStory.ttsScript}',
     );
-  await _lg?.showHistory(
-    _selected!,
-    _story!,
-    );
+    await _lg?.showHistory(
+      _selected!,
+      historyStory,
+      );
   }
 
   Future<void> _onLookingAhead() async {
     if (_selected == null || _story == null) return;
+    final futureStory = await _svc.getThemedStory(
+      _selected!, _iucnData!, 'future',
+    );
     await _speakText(
       'Looking ahead for ${_selected!.commonName}. '
-      'Conservation efforts could still save this species.',
+      '${futureStory.ttsScript}',
     );
     await _lg?.showFuture(
       _selected!,
-      _story!,
+      futureStory,
     );
   }
 

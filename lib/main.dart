@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/splash_screen_one.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env"); // Load environment variables from .env file
+  await Hive.initFlutter();
+  await Hive.openBox('species_stories');
   runApp(const MyApp());
 }
 

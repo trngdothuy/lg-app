@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:hive/hive.dart';
 import '../models/species.dart';
 
 class SpeciesStory {
@@ -40,7 +41,7 @@ class SpeciesService {
   static const _iucnBase = 'https://apiv3.iucnredlist.org/api/v3';
   static const _geminiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models'
-      '/gemini-1.5-flash:generateContent';
+      '/gemini-3.5-flash:generateContent';
 
   // ── Step 1: fetch IUCN assessment data ───────────────────────
   Future<Map<String, String>> fetchIucnData(Species s) async {
@@ -101,7 +102,115 @@ class SpeciesService {
     return result;
   }
 
-  // ── Step 2: Gemini storytelling ───────────────────────────────
+  Future<SpeciesStory> generateThemedStory(
+    Species s,
+    Map<String, String> iucn, {
+    required String mode, // 'history' or 'future'
+  }) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$_geminiUrl?key=$_geminiKey'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'contents': [
+                {'parts': [{'text': _themedPrompt(s, iucn, mode)}]}
+              ],
+              'generationConfig': {
+                'temperature': 0.75,
+                'maxOutputTokens': 1024,
+                'responseMimeType': 'application/json',
+              },
+            }),
+          )
+          .timeout(const Duration(seconds: 25));
+
+      if (res.statusCode == 200) {
+        final raw = (json.decode(res.body)['candidates']?[0]?['content']
+                ?['parts']?[0]?['text'] as String? ?? '');
+        final cleaned = raw
+            .replaceAll(RegExp(r'```json\s*'), '')
+            .replaceAll(RegExp(r'```\s*'), '')
+            .trim();
+        final parsed = json.decode(cleaned) as Map<String, dynamic>;
+        return SpeciesStory(
+          narrative: parsed['narrative'] as String? ?? _fallbackThemed(s, iucn, mode),
+          ttsScript: parsed['tts_script'] as String? ?? _fallbackTts(s),
+          iucnFields: iucn,
+        );
+      } else {
+        print('Gemini returned ${res.statusCode}: ${res.body}');
+      }
+    } catch (e) {
+      print('Gemini call FAILED, using fallback: $e');
+      // fall through to fallback
+    }
+    return SpeciesStory(
+      narrative: _fallbackThemed(s, iucn, mode),
+      ttsScript: _fallbackTts(s),
+      iucnFields: iucn,
+    );
+  }
+
+  String _themedPrompt(Species s, Map<String, String> iucn, String mode) {
+    final shared = '''
+  SPECIES DATA (from IUCN Red List):
+  - Common name: ${s.commonName}
+  - Scientific name: ${s.scientificName}
+  - IUCN Status: ${s.category == 'CR' ? 'Critically Endangered (CR)' : 'Endangered (EN)'}
+  - Habitat: ${iucn['habitat_text'] ?? s.habitat}
+  - Key threats: ${iucn['threats'] ?? s.threats}
+  - Conservation actions: ${iucn['conservation'] ?? 'Not available'}
+  - Population: ${iucn['population'] ?? 'Unknown'}
+  ''';
+
+    if (mode == 'history') {
+      return '''
+  You are a conservation storyteller for a Liquid Galaxy multi-screen exhibit.
+  $shared
+  Write about how this species' population and range have likely declined over
+  recent decades, based ONLY on the threats and population data above. Do NOT
+  invent specific years, percentages, or figures not present in the data —
+  describe the qualitative trend (declining population, shrinking range)
+  rather than fabricated statistics.
+
+  Return JSON with exactly two keys:
+  "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
+    bold the species name, emotional but factual tone about the decline.
+  "tts_script": Plain text, max 70 words, spoken narration about the decline.
+  Return ONLY valid JSON.
+  ''';
+    } else {
+      return '''
+  You are a conservation storyteller for a Liquid Galaxy multi-screen exhibit.
+  $shared
+  Write about the future outlook for this species: threats it will likely
+  keep facing, and concrete conservation actions (from the data above, or
+  well-known strategies for this type of species) that could help it recover.
+  Hopeful but realistic tone.
+
+  Return JSON with exactly two keys:
+  "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
+    bold the species name, end on a hopeful, actionable note.
+  "tts_script": Plain text, max 70 words, ending with a call to action.
+  Return ONLY valid JSON.
+  ''';
+    }
+  }
+
+  String _fallbackThemed(Species s, Map<String, String> iucn, String mode) {
+    if (mode == 'history') {
+      return '<p><b>${s.commonName}</b> has seen its population decline over '
+          'recent decades due to ${iucn['threats'] ?? s.threats}.</p>'
+          '<p>Its range within ${iucn['habitat_text'] ?? s.habitat} continues to shrink.</p>';
+    }
+    return '<p>Without stronger action, <b>${s.commonName}</b> will keep facing '
+        '${iucn['threats'] ?? s.threats}.</p>'
+        '<p>${iucn['conservation'] ?? 'Continued habitat protection and anti-poaching efforts'} '
+        'could help it recover.</p>';
+  }
+
+  // Gemini story genearation for general species (not a specific story)
   Future<SpeciesStory> generateStory(
       Species s, Map<String, String> iucn) async {
     try {
@@ -140,8 +249,11 @@ class SpeciesService {
           ttsScript:  parsed['tts_script'] as String? ?? _fallbackTts(s),
           iucnFields: iucn,
         );
+      } else {
+        print('Gemini returned ${res.statusCode}: ${res.body}');
       }
     } catch (e) {
+      print('Gemini call FAILED, using fallback: $e');
       // Gemini unavailable — use fallback
     }
     return SpeciesStory(
@@ -149,6 +261,33 @@ class SpeciesService {
       ttsScript:  _fallbackTts(s),
       iucnFields: iucn,
     );
+  }
+
+  Future<SpeciesStory> getStory(Species s, Map<String, String> iucn) =>
+    _cached('${s.internalTaxonId}_initial', () => generateStory(s, iucn));
+
+  Future<SpeciesStory> getThemedStory(Species s, Map<String, String> iucn, String mode) =>
+      _cached('${s.internalTaxonId}_$mode', () => generateThemedStory(s, iucn, mode: mode));
+
+  Future<SpeciesStory> _cached(String key, Future<SpeciesStory> Function() generate) async {
+    final box = Hive.box('species_stories');
+    final cached = box.get(key);
+    if (cached != null) {
+      final map = Map<String, dynamic>.from(cached);
+      return SpeciesStory(
+        narrative: map['narrative'],
+        ttsScript: map['ttsScript'],
+        iucnFields: Map<String, String>.from(map['iucnFields']),
+      );
+    }
+
+    final story = await generate();
+    await box.put(key, {
+      'narrative': story.narrative,
+      'ttsScript': story.ttsScript,
+      'iucnFields': story.iucnFields,
+    });
+    return story;
   }
 
   // ── Gemini prompt ─────────────────────────────────────────────
