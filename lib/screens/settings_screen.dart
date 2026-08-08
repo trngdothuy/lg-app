@@ -8,6 +8,7 @@ import '../../providers/nav_bar_provider.dart';
 import 'tools_screen.dart';
 import 'home_screen.dart';
 import '../data/species_data.dart';
+import '../services/species_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -53,6 +54,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _passwordController = TextEditingController(text: 'lg');
     _screensController = TextEditingController(text: widget.screens.toString());
   }
+
+  // int _preloadDone = 0;
+  // int _preloadTotal = 0;
+  // bool _preloading = false;
+
+  // Future<void> _preloadStories() async {
+  //   setState(() {
+  //     _preloading = true;
+  //     _preloadDone = 0;
+  //     _preloadTotal = vietnamSpecies.length * 3;
+  //   });
+
+  //   final svc = SpeciesService();
+  //   await svc.preloadAllStories(
+  //     vietnamSpecies,
+  //     onProgress: (done, total) => setState(() {
+  //       _preloadDone = done;
+  //       _preloadTotal = total;
+  //     }),
+  //   );
+
+  //   setState(() => _preloading = false);
+  // }
 
   // QR scanner controller
   // Expected QR JSON format:
@@ -242,6 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
       }
   }
+  
 
   Future<void> _run(SSHClient client, String cmd) async {
     print("RUN: $cmd");
@@ -544,6 +569,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
 
               const SizedBox(height: 32),
+
+              // OutlinedButton(
+              //   onPressed: _preloading ? null : _preloadStories,
+              //   child: Text(_preloading
+              //       ? 'Preloading $_preloadDone / $_preloadTotal...'
+              //       : 'Preload All Species Stories'),
+              // ),
             ],
           ),
         ),
@@ -757,47 +789,47 @@ class _ScanOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  const windowSize = 260.0;
-  return LayoutBuilder(builder: (context, constraints) {
-  final cx = constraints.maxWidth / 2;
-  final cy = constraints.maxHeight / 2;
-  final left = cx - windowSize / 2;
-  final top = cy - windowSize / 2;
-  final right = cx + windowSize / 2;
-  final bottom = cy + windowSize / 2;
+    const windowSize = 260.0;
+    return LayoutBuilder(builder: (context, constraints) {
+      final cx = constraints.maxWidth / 2;
+      final cy = constraints.maxHeight / 2;
+      final left = cx - windowSize / 2;
+      final top = cy - windowSize / 2;
+      final right = cx + windowSize / 2;
+      final bottom = cy + windowSize / 2;
 
-  return Stack(
-  children: [
-  // dark surround
-  CustomPaint(
-  size: Size(constraints.maxWidth, constraints.maxHeight),
-  painter: _DimPainter(
-  cutout: Rect.fromLTRB(left, top, right, bottom),
-  ),
-  ),
-  // corner brackets
-  Positioned(
-  left: left, top: top,
-  child: _CornerBracket(corner: _Corner.topLeft),
-  ),
-  Positioned(
-  right: constraints.maxWidth - right, top: top,
-  child: _CornerBracket(corner: _Corner.topRight),
-  ),
-  Positioned(
-  left: left, bottom: constraints.maxHeight - bottom,
-  child: _CornerBracket(corner: _Corner.bottomLeft),
-  ),
-  Positioned(
-  right: constraints.maxWidth - right,
-  bottom: constraints.maxHeight - bottom,
-  child: _CornerBracket(corner: _Corner.bottomRight),
-  ),
-  ],
-  );
-  });
+    return Stack(
+      children: [
+      // dark surround
+      CustomPaint(
+        size: Size(constraints.maxWidth, constraints.maxHeight),
+        painter: _DimPainter(
+        cutout: Rect.fromLTRB(left, top, right, bottom),
+        ),
+        ),
+      // corner brackets
+      Positioned(
+        left: left, top: top,
+        child: _CornerBracket(corner: _Corner.topLeft),
+      ),
+      Positioned(
+        right: constraints.maxWidth - right, top: top,
+        child: _CornerBracket(corner: _Corner.topRight),
+      ),
+      Positioned(
+        left: left, bottom: constraints.maxHeight - bottom,
+        child: _CornerBracket(corner: _Corner.bottomLeft),
+      ),
+      Positioned(
+        right: constraints.maxWidth - right,
+        bottom: constraints.maxHeight - bottom,
+        child: _CornerBracket(corner: _Corner.bottomRight),
+      ),
+      ],
+      );
+      });
+      }
   }
-}
 
 class _DimPainter extends CustomPainter {
   final Rect cutout;

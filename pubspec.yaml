@@ -42,6 +42,7 @@ dependencies:
   google_maps_flutter: ^2.17.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  path_provider: ^2.1.1
 
 
 dev_dependencies:
@@ -81,6 +82,7 @@ flutter:
     - assets/logo/paw.png
     - assets/avatar/avatar.gif
     - assets/species_images/
+    - assets/species_stories_seed.json
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
 import '../../providers/nav_bar_provider.dart';
+import '../services/species_service.dart';
+import '../data/species_data.dart';
 
 class ToolsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -26,6 +28,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
   bool _isDarkMode  = false;
   String? _busyBtn;  // label of button currently running
   String _status = '';
+  bool _preloading = false;
 
   // ── SSH helper ────────────────────────────────────────────────
   Future<void> _run(String cmd) async {
@@ -289,6 +292,37 @@ class _ToolsScreenState extends State<ToolsScreen> {
               width:    160,
               isRed:    false,
             ),
+
+            const SizedBox(height: 28),
+           
+            // Preload remaining stories button (dev only) ─────────────────────
+            ElevatedButton(
+              onPressed:_preloading ? null : () async {
+                setState(() => _preloading = true);
+                print('Preloading remaining stories...');
+                final svc = SpeciesService();
+                await svc.preloadAllStories(
+                  vietnamSpecies, 
+                  onProgress: (done, total) {
+                  print('Preload progress: $done / $total');
+                });
+                print('Preload complete.');
+                setState(() => _preloading = false);
+              },
+              child: Text(_preloading ? 'Preloading...' : 'Preload remaining stories (dev only)'),
+            ),
+
+             // Export cache button (dev only) ─────────────────────────────
+            ElevatedButton(
+              onPressed: () async {
+                print('Exporting story cache...');
+                final path = await SpeciesService().exportCacheToFile();
+                print('Cache exported to: $path');
+                // optionally show a SnackBar with the path too
+              },
+              child: const Text('Export story cache (dev only)'),
+            ),
+
 
             const Spacer(flex: 2),
 
