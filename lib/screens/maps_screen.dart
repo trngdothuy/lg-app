@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 // import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:provider/provider.dart';
 // import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../data/species_data.dart';
 import '../models/species.dart';
@@ -13,6 +14,7 @@ import '../services/species_service.dart';
 // import '../services/kml_service.dart';
 import '../services/lg_service.dart';
 import '../providers/nav_bar_provider.dart';
+import '../providers/theme_provider.dart';
 
 class MapsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -62,7 +64,7 @@ class _MapsScreenState extends State<MapsScreen> {
     zoom: 6,
   );
 }
-  bool _isDark = false;
+  // bool _isDark = false;
   Set<Marker> _markers = {};
 
   // Throttle LG camera sync to avoid flooding SSH
@@ -480,9 +482,10 @@ class _MapsScreenState extends State<MapsScreen> {
 
   // ── Dark mode ─────────────────────────────────────────────────
   Future<void> _toggleDark() async {
-    setState(() => _isDark = !_isDark);
+    final themeProvider = context.read<ThemeProvider>();
+    themeProvider.toggleDark();
     final c = await _mapCtrl.future;
-    await c.setMapStyle(_isDark ? _kDarkStyle : null);
+    await c.setMapStyle(themeProvider.isDark ? _kDarkStyle : null);
   }
 
   // ── Helpers ───────────────────────────────────────────────────
@@ -753,7 +756,7 @@ class _MapsScreenState extends State<MapsScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: _isDark
+                color: context.watch<ThemeProvider>().isDark
                     ? const Color(0xFF222222)
                     : Colors.white,
                 shape: BoxShape.circle,
@@ -762,10 +765,10 @@ class _MapsScreenState extends State<MapsScreen> {
                 ],
               ),
               child: Icon(
-                _isDark
+                context.watch<ThemeProvider>().isDark
                     ? Icons.wb_sunny_outlined
                     : Icons.nightlight_round,
-                color: _isDark ? Colors.white70 : Colors.black54,
+                color: context.watch<ThemeProvider>().isDark ? Colors.white70 : Colors.black54,
                 size: 22,
               ),
             ),
@@ -796,7 +799,7 @@ class _MapsScreenState extends State<MapsScreen> {
         host: widget.host,
         screens: widget.screens,
         isConnected: widget.isConnected,
-        isDark: _isDark,
+        isDark: context.watch<ThemeProvider>().isDark,
       ),
     );
   }

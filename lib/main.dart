@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:provider/provider.dart';
 import 'screens/splash_screen_one.dart';
+import 'providers/theme_provider.dart';
 
 Future<void> seedCacheIfEmpty() async {
   final box = Hive.box('species_stories');
@@ -28,7 +30,12 @@ void main() async {
   await seedCacheIfEmpty(); // Seed the cache if it's empty
   // await Hive.box('species_stories').clear(); // Clear the box on app start
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -36,10 +43,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
     return MaterialApp(
       title: 'Red List Endangered Species Living Atlas App',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: themeProvider.isDark ? Brightness.dark : Brightness.light,),
         useMaterial3: true,
       ),
       home: const SplashScreenOne(),
