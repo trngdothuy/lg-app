@@ -467,6 +467,7 @@ class _MapsScreenState extends State<MapsScreen> {
   // ── TTS ───────────────────────────────────────────────────────
   Future<void> _speakText(String text) async {
     if (_isMuted) return;
+    await _tts.stop();
     await _tts.setLanguage('en-US');
     await _tts.setSpeechRate(0.48);
     await _tts.speak(text);

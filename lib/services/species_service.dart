@@ -121,26 +121,27 @@ class SpeciesService {
 Future<void> preloadAllStories(
     List<Species> species, {
     void Function(int done, int total)? onProgress,
+    int? maxSpeciesThisRun, // for testing, limit how many species to process
   }) async {
-    final total = species.length * 3; // initial + history + future
+    final targets = maxSpeciesThisRun != null
+        ? species.take(maxSpeciesThisRun).toList()
+        : species;
+    final total = targets.length * 3; // initial + history + future
     int done = 0;
 
-    for (final s in species) {
+    for (final s in targets) {
       final iucn = await fetchIucnData(s);
 
-      await getStory(s, iucn);
-      done++;
-      onProgress?.call(done, total);
-      await Future.delayed(const Duration(seconds: 20)); // pace against rate limits
-
-      await getThemedStory(s, iucn, 'history');
-      done++;
-      onProgress?.call(done, total);
+      try { await getStory(s, iucn); } catch (_) {}
+      done++; onProgress?.call(done, total);
       await Future.delayed(const Duration(seconds: 20));
 
-      await getThemedStory(s, iucn, 'future');
-      done++;
-      onProgress?.call(done, total);
+      try { await getThemedStory(s, iucn, 'history'); } catch (_) {}
+      done++; onProgress?.call(done, total);
+      await Future.delayed(const Duration(seconds: 20));
+
+      try { await getThemedStory(s, iucn,'future'); } catch (_) {}
+      done++; onProgress?.call(done, total);
       await Future.delayed(const Duration(seconds: 20));
     }
   }
@@ -200,16 +201,17 @@ Future<void> preloadAllStories(
           ttsScript: parsed['tts_script'] as String? ?? _fallbackTts(s),
           iucnFields: iucn,
         );
-      } 
+      }
     } catch (e) {
       print('Gemini call FAILED, using fallback: $e');
       // fall through to fallback
     }
-    return SpeciesStory(
-      narrative: _fallbackThemed(s, iucn, mode),
-      ttsScript: _fallbackTts(s),
-      iucnFields: iucn,
-    );
+    throw Exception('gemini_failed');
+    // return SpeciesStory(
+    //   narrative: _fallbackThemed(s, iucn, mode),
+    //   ttsScript: _fallbackTts(s),
+    //   iucnFields: iucn,
+    // );
   }
 
   String _themedPrompt(Species s, Map<String, String> iucn, String mode) {
@@ -281,25 +283,36 @@ Future<void> preloadAllStories(
           ttsScript:  parsed['tts_script'] as String? ?? _fallbackTts(s),
           iucnFields: iucn,
         );
-      } 
+      }
     } catch (e) {
       print('Gemini call FAILED, using fallback: $e');
       // Gemini unavailable — use fallback
     }
-    return SpeciesStory(
-      narrative:  _fallbackHtml(s, iucn),
-      ttsScript:  _fallbackTts(s),
-      iucnFields: iucn,
-    );
+    throw Exception('gemini_failed');
+    // return SpeciesStory(
+    //   narrative:  _fallbackHtml(s, iucn),
+    //   ttsScript:  _fallbackTts(s),
+    //   iucnFields: iucn,
+    // );
   }
 
-  Future<SpeciesStory> getStory(Species s, Map<String, String> iucn) =>
-    _cached('${s.internalTaxonId}_initial_v2', () => generateStory(s, iucn));
+  Future<SpeciesStory> getStory(Species s, Map<String, String> iucn) async {
+    try {
+      return await _cached('${s.internalTaxonId}_initial_v2', () => generateStory(s, iucn));
+    } catch (_) {
+      // Never cached — just shown to whoever's looking right now.
+      return SpeciesStory(narrative: _fallbackHtml(s, iucn), ttsScript: _fallbackTts(s), iucnFields: iucn);
+    }
+  }
 
-  Future<SpeciesStory> getThemedStory(Species s, Map<String, String> iucn, String mode) =>
-      _cached('${s.internalTaxonId}_${mode}_v2', () => generateThemedStory(s, iucn, mode: mode));
+  Future<SpeciesStory> getThemedStory(Species s, Map<String, String> iucn, String mode) async {
+    try {
+      return await _cached('${s.internalTaxonId}_${mode}_v2', () => generateThemedStory(s, iucn, mode: mode));
+    } catch (_) {
+      return SpeciesStory(narrative: _fallbackThemed(s, iucn, mode), ttsScript: _fallbackTts(s), iucnFields: iucn);
+    }
+  }
 
- 
   // ── Gemini prompt ─────────────────────────────────────────────
   String _prompt(Species s, Map<String, String> iucn) => '''
 You are a conservation storyteller for a Liquid Galaxy multi-screen exhibit.
@@ -370,13 +383,18 @@ Return ONLY valid JSON. No markdown, no explanation.
       );
     }
 
-    final story = await generate();
-    await box.put(key, {
-      'narrative': story.narrative,
-      'ttsScript': story.ttsScript,
-      'iucnFields': story.iucnFields,
-    });
-    return story;
+    try {
+      final story = await generate();
+      await box.put(key, {
+        'narrative': story.narrative,
+        'ttsScript': story.ttsScript,
+        'iucnFields': story.iucnFields,
+      });
+      return story;
+    } catch (e) {
+      print('Error generating story for $key: $e');
+      rethrow;
+    }
   }
 
   Future<String> exportCacheAsJson() async {
