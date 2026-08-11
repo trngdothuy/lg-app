@@ -13,11 +13,13 @@ class SpeciesStory {
   final String narrative;
   final String ttsScript;
   final Map<String,String> iucnFields;
+  final List<Map<String, String>>? highlights; // to highlight narrative text on screen (optional)
 
   const SpeciesStory({
     required this.narrative,
     required this.ttsScript,
     required this.iucnFields,
+    this.highlights,
   });
 
   String get habitat =>
@@ -200,6 +202,9 @@ Future<void> preloadAllStories(
           narrative: parsed['narrative'] as String? ?? _fallbackThemed(s, iucn, mode),
           ttsScript: parsed['tts_script'] as String? ?? _fallbackTts(s),
           iucnFields: iucn,
+          highlights: (parsed['highlights'] as List?)
+              ?.map((item) => Map<String, String>.from(item))
+              .toList(),
         );
       }
     } catch (e) {
@@ -236,10 +241,14 @@ Future<void> preloadAllStories(
       describe the qualitative trend (declining population, shrinking range)
       rather than fabricated statistics.
 
-      Return JSON with exactly two keys:
+      Return JSON with exactly three keys:
       "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
         bold the species name, emotional but factual tone about the decline.
       "tts_script": Plain text, max 70 words, spoken narration about the decline.
+      "highlights": An array of 3-5 short bullet points (max 12 words each) summarizing
+        the key facts. Each item is an object: {"text": "...", "type": "threat"|"action"|"fact"|"hope"}.
+        Use "threat" for dangers, "action" for conservation steps, "fact" for
+        neutral info (habitat, population), "hope" for positive/hopeful notes.
       Return ONLY valid JSON.
       ''';
     } else {
@@ -251,10 +260,14 @@ Future<void> preloadAllStories(
       well-known strategies for this type of species) that could help it recover.
       Hopeful but realistic tone.
 
-      Return JSON with exactly two keys:
+      Return JSON with exactly three keys:
       "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
         bold the species name, end on a hopeful, actionable note.
       "tts_script": Plain text, max 70 words, ending with a call to action.
+      "highlights": An array of 3-5 short bullet points (max 12 words each) summarizing
+        the key facts. Each item is an object: {"text": "...", "type": "threat"|"action"|"fact"|"hope"}.
+        Use "threat" for dangers, "action" for conservation steps, "fact" for
+        neutral info (habitat, population), "hope" for positive/hopeful notes.
       Return ONLY valid JSON.
       ''';
     }
@@ -282,6 +295,9 @@ Future<void> preloadAllStories(
           narrative:  parsed['narrative']  as String? ?? _fallbackHtml(s, iucn),
           ttsScript:  parsed['tts_script'] as String? ?? _fallbackTts(s),
           iucnFields: iucn,
+          highlights: (parsed['highlights'] as List?)
+              ?.map((item) => Map<String, String>.from(item))
+              .toList(), 
         );
       }
     } catch (e) {
@@ -298,7 +314,7 @@ Future<void> preloadAllStories(
 
   Future<SpeciesStory> getStory(Species s, Map<String, String> iucn) async {
     try {
-      return await _cached('${s.internalTaxonId}_initial_v2', () => generateStory(s, iucn));
+      return await _cached('${s.internalTaxonId}_initial_v3', () => generateStory(s, iucn));
     } catch (_) {
       // Never cached — just shown to whoever's looking right now.
       return SpeciesStory(narrative: _fallbackHtml(s, iucn), ttsScript: _fallbackTts(s), iucnFields: iucn);
@@ -307,7 +323,7 @@ Future<void> preloadAllStories(
 
   Future<SpeciesStory> getThemedStory(Species s, Map<String, String> iucn, String mode) async {
     try {
-      return await _cached('${s.internalTaxonId}_${mode}_v2', () => generateThemedStory(s, iucn, mode: mode));
+      return await _cached('${s.internalTaxonId}_${mode}_v3', () => generateThemedStory(s, iucn, mode: mode));
     } catch (_) {
       return SpeciesStory(narrative: _fallbackThemed(s, iucn, mode), ttsScript: _fallbackTts(s), iucnFields: iucn);
     }
@@ -330,7 +346,7 @@ SPECIES DATA (from IUCN Red List):
 - Countries of occurrence: ${iucn['countries'] ?? 'Vietnam region'}
 - IUCN rationale: ${iucn['rationale'] ?? 'Not available'}
 
-Return a JSON object with exactly two keys:
+Return a JSON object with exactly three keys:
 
 "narrative": HTML content (no html/body/head tags) for a large display screen.
   Max 160 words. Use <p> tags. Bold the species name. Show status in
@@ -340,6 +356,10 @@ Return a JSON object with exactly two keys:
 "tts_script": Plain text (no HTML). Max 70 words. Spoken aloud by a narrator.
   Start with the species name. Only use facts from the data above.
   End with a conservation call to action.
+"highlights": An array of 3-5 short bullet points (max 12 words each) summarizing
+  the key facts. Each item is an object: {"text": "...", "type": "threat"|"action"|"fact"|"hope"}.
+  Use "threat" for dangers, "action" for conservation steps, "fact" for
+  neutral info (habitat, population), "hope" for positive/hopeful notes.
 
 Return ONLY valid JSON. No markdown, no explanation.
 ''';
@@ -380,6 +400,9 @@ Return ONLY valid JSON. No markdown, no explanation.
         narrative: map['narrative'],
         ttsScript: map['ttsScript'],
         iucnFields: Map<String, String>.from(map['iucnFields']),
+        highlights: (map['highlights'] as List?)
+            ?.map((item) => Map<String, String>.from(item))
+            .toList(),
       );
     }
 
@@ -389,6 +412,7 @@ Return ONLY valid JSON. No markdown, no explanation.
         'narrative': story.narrative,
         'ttsScript': story.ttsScript,
         'iucnFields': story.iucnFields,
+        'highlights': story.highlights,
       });
       return story;
     } catch (e) {

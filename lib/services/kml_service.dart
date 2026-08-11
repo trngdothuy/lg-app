@@ -85,8 +85,18 @@ class KmlService {
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
 <Document>
+<Style id="infoBalloon">
+  <BalloonStyle>
+    <bgColor>ff251b0e</bgColor>
+    <textColor>ffffffff</textColor>
+    <text><![CDATA[
+      \$[description]
+    ]]></text>
+  </BalloonStyle>
+</Style>
 <Placemark>
   <name>${_escape(species.commonName)}</name>
+  <styleUrl>#infoBalloon</styleUrl>
   <description><![CDATA[
     ${_infoHtml(species, story, heading, imageUrl)}
   ]]></description>
@@ -105,6 +115,10 @@ class KmlService {
         ? '<img src="$imageUrl" style="width:100%;border-radius:8px;margin-bottom:8px;">'
         : '';
     
+    final body = (story.highlights != null && story.highlights!.isNotEmpty)
+        ? _renderHighlights(story.highlights!)
+        : '<div style="line-height:1.5;">${story.narrative}</div>';
+    
     return '''
 <div style="font-family:Arial;max-width:340px;background:#0E1B25;
             color:white;padding:16px;border-radius:8px;">
@@ -117,7 +131,27 @@ class KmlService {
               margin-bottom:10px;">
     $heading
   </div>
-  <div style="line-height:1.5;">${story.narrative}</div>
+  $body
 </div>''';
+  }
+
+  static const Map<String, String> _highlightColors = {
+    'threat': '#EF5350', // red
+    'action': '#66BB6A', // green
+    'fact': '#29B6F6',   // blue
+    'hope': '#FFA726',   // orange
+  };
+
+  static String _renderHighlights(List<Map<String, String>> highlights) {
+    final items = highlights.map((h) {
+      final color = _highlightColors[h['type']] ?? '#FFFFFF';
+      return '''
+      <li style="margin-bottom:8px;line-height:1.4;">
+        <span style="color:$color;font-weight:bold;">•</span>
+        ${_escape(h['text'] ?? '')} 
+      </li>''';
+    }).join();
+
+    return '<ul style="list-style-type:none;padding:0;margin:0;">$items</ul>';
   }
 }
