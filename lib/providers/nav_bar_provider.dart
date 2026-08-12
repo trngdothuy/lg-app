@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:provider/provider.dart';
 
 // Forward declarations to avoid circular imports
 import '../screens/home_screen.dart';
 import '../screens/tools_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/maps_screen.dart';
+import 'theme_provider.dart';
 
 class AppBottomNav extends StatelessWidget {
   final int selectedIndex;
@@ -13,7 +15,7 @@ class AppBottomNav extends StatelessWidget {
   final String host;
   final int screens;
   final bool isConnected;
-  final bool isDark;
+  // final bool isDark;
 
   const AppBottomNav({
     super.key,
@@ -22,7 +24,7 @@ class AppBottomNav extends StatelessWidget {
     required this.host,
     required this.screens,
     required this.isConnected,
-    this.isDark = false,
+    // this.isDark = false,
   });
 
   void _onTap(BuildContext context, int index) {
@@ -82,6 +84,7 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const labels = ['Home', 'Maps', 'Chat', 'Tools', 'Settings'];
+    final isDark = context.watch<ThemeProvider>().isDark;
 
     final bg      = isDark ? const Color(0xFF0F0F0F) : Colors.white;
     final border  = isDark ? const Color(0xFF222222) : const Color(0xFFEEEEEE);

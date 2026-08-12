@@ -2,13 +2,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:red_list_endangered_species_vietnam_app/services/lg_service.dart';
 import '../../providers/nav_bar_provider.dart';
+import '../providers/theme_provider.dart';
 import 'tools_screen.dart';
 import 'home_screen.dart';
 import '../data/species_data.dart';
 import '../services/species_service.dart';
+import '../widgets/dark_mode_toggle.dart';
 
 class SettingsScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -390,11 +393,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // UI
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeProvider>().isDark;
+    final backgroundColor =
+      isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F0);
+    final fieldColor =
+      isDark ? const Color(0xFF222222) : const Color(0xFFEBEBE6);
+    final primaryText =
+      isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final secondaryText =
+      isDark ? Colors.white70 : const Color(0xFF555555);
+
     final host = _hostController.text.trim();
     final screens = int.tryParse(_screensController.text) ?? widget.screens;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F0),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('Settings'),
         backgroundColor: const Color(0xFF4A7C59),
@@ -440,18 +453,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: () {
                   _openQrScanner();
                 },
-                icon: const Icon(Icons.qr_code_scanner_outlined,
-                    color: Color(0xFF555555)),
-                label: const Text(
+                icon: Icon(Icons.qr_code_scanner_outlined,
+                    color: secondaryText,),
+                label: Text(
                   'Scan QR Code',
                   style: TextStyle(
-                    color: Color(0xFF333333),
+                    color: primaryText,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEBEBE6),
+                  backgroundColor: fieldColor,
                   side: BorderSide.none,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
@@ -521,9 +534,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Text(
                     _connectionStatus,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Colors.black54,
+                      color: isDark ? Colors.white70 : Colors.black54,
                     ),
                   ),
                 ),
@@ -538,7 +551,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: ElevatedButton(
                     onPressed: _isConnected ? _disconnect : _connect,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isConnected ? Colors.grey : const Color(0xFF4A7C59),
+                      backgroundColor: isDark ? const Color(0xFF2A2A2A) : (_isConnected ? Colors.grey : const Color(0xFF4A7C59)),
                       foregroundColor: Colors.white,
                       disabledBackgroundColor:
                           const Color(0xFF4A7C59).withOpacity(0.5),
@@ -576,10 +589,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               //       ? 'Preloading $_preloadDone / $_preloadTotal...'
               //       : 'Preload All Species Stories'),
               // ),
+
+              // ── Dark mode toggle (bottom-left, above nav bar) ─────────
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 24),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: DarkModeToggle(),
+                ),
+              ),
             ],
           ),
         ),
       ),
+      
 
       // ── Bottom navigation bar ────────────────────────────────────
       bottomNavigationBar: AppBottomNav(
@@ -599,30 +622,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool isPassword = false,
     bool isNumber = false,
   }) {
+    final isDark = context.watch<ThemeProvider>().isDark;
+    final fieldColor =
+      isDark ? const Color(0xFF222222) : const Color(0xFFEBEBE6);
+    final textColor =
+      isDark ? Colors.white : const Color(0xFF1A1A1A);
+    final labelColor =
+      isDark ? Colors.white70 : const Color(0xFF555555);
+    final hintColor =
+      isDark ? Colors.white38 : const Color(0xFFAAAAAA);
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEBEBE6),
+        color: fieldColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword ? _obscurePassword : false,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        style: const TextStyle(
-          color: Color(0xFF1A1A1A),
+        style: TextStyle(
+          color: textColor,
           fontSize: 15,
         ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle: const TextStyle(
-            color: Color(0xFF888888),
+          labelStyle: TextStyle(
+            color: labelColor,
             fontSize: 13,
             fontWeight: FontWeight.w400,
           ),
-          hintStyle: const TextStyle(
-            color: Color(0xFFAAAAAA),
+          hintStyle: TextStyle(
+            color: hintColor,
             fontSize: 13,
           ),
           // Clear (×) button on the right
@@ -632,7 +665,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _obscurePassword
                         ? Icons.visibility_off
                         : Icons.visibility,
-                    color: const Color(0xFFAAAAAA),
+                    color: isDark ? Colors.white38 : const Color(0xFFAAAAAA),
                   ),
                   onPressed: () {
                     setState(() {
@@ -867,43 +900,43 @@ class _CornerBracket extends StatelessWidget {
   final isTop = corner == _Corner.topLeft || corner == _Corner.topRight;
 
   return SizedBox(
-  width: len, height: len,
-  child: Stack(children: [
+    width: len, height: len,
+    child: Stack(children: [
   // horizontal arm
-  Positioned(
-  left: isLeft ? 0 : null,
-  right: isLeft ? null : 0,
-  top: isTop ? 0 : null,
-  bottom: isTop ? null : 0,
-  child: Container(
-  width: len, height: thick,
-  decoration: BoxDecoration(
-  color: color,
-  borderRadius: BorderRadius.only(
-  topLeft: (isLeft && isTop) ? r : Radius.zero,
-  topRight: (!isLeft && isTop) ? r : Radius.zero,
-  bottomLeft: (isLeft && !isTop) ? r : Radius.zero,
-  bottomRight: (!isLeft && !isTop) ? r : Radius.zero,
-  ),
-  ),
-  ),
+      Positioned(
+        left: isLeft ? 0 : null,
+        right: isLeft ? null : 0,
+        top: isTop ? 0 : null,
+        bottom: isTop ? null : 0,
+        child: Container(
+        width: len, height: thick,
+        decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.only(
+        topLeft: (isLeft && isTop) ? r : Radius.zero,
+        topRight: (!isLeft && isTop) ? r : Radius.zero,
+        bottomLeft: (isLeft && !isTop) ? r : Radius.zero,
+        bottomRight: (!isLeft && !isTop) ? r : Radius.zero,
+        ),
+      ),
+    ),
   ),
   // vertical arm
-  Positioned(
-  left: isLeft ? 0 : null,
-  right: isLeft ? null : 0,
-  top: isTop ? 0 : null,
-  bottom: isTop ? null : 0,
-  child: Container(
-  width: thick, height: len,
-  decoration: BoxDecoration(
-  color: color,
-  borderRadius: BorderRadius.only(
-  topLeft: (isLeft && isTop) ? r : Radius.zero,
-  topRight: (!isLeft && isTop) ? r : Radius.zero,
-  bottomLeft: (isLeft && !isTop) ? r : Radius.zero,
-  bottomRight: (!isLeft && !isTop) ? r : Radius.zero,
-  ),
+      Positioned(
+        left: isLeft ? 0 : null,
+        right: isLeft ? null : 0,
+        top: isTop ? 0 : null,
+        bottom: isTop ? null : 0,
+        child: Container(
+        width: thick, height: len,
+        decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.only(
+        topLeft: (isLeft && isTop) ? r : Radius.zero,
+        topRight: (!isLeft && isTop) ? r : Radius.zero,
+        bottomLeft: (isLeft && !isTop) ? r : Radius.zero,
+        bottomRight: (!isLeft && !isTop) ? r : Radius.zero,
+        ),
   ),
   ),
   ),

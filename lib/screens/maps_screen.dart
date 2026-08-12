@@ -15,6 +15,7 @@ import '../services/species_service.dart';
 import '../services/lg_service.dart';
 import '../providers/nav_bar_provider.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/dark_mode_toggle.dart';
 
 class MapsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -228,6 +229,17 @@ class _MapsScreenState extends State<MapsScreen> {
     _searchCtrl.dispose();
     _tts.stop();
     super.dispose();
+  }
+
+  // Update dark mode style
+  Future<void> _updateMapStyle(bool isDark) async {
+    if (!_mapCtrl.isCompleted) return;
+
+    final controller = await _mapCtrl.future;
+
+    await controller.setMapStyle(
+      isDark ? _kDarkStyle : null,
+    );
   }
 
   // ── LG init ───────────────────────────────────────────────────
@@ -481,12 +493,12 @@ class _MapsScreenState extends State<MapsScreen> {
   });
 
   // ── Dark mode ─────────────────────────────────────────────────
-  Future<void> _toggleDark() async {
-    final themeProvider = context.read<ThemeProvider>();
-    themeProvider.toggleDark();
-    final c = await _mapCtrl.future;
-    await c.setMapStyle(themeProvider.isDark ? _kDarkStyle : null);
-  }
+  // Future<void> _toggleDark() async {
+  //   final themeProvider = context.read<ThemeProvider>();
+  //   themeProvider.toggleDark();
+  //   final c = await _mapCtrl.future;
+  //   await c.setMapStyle(themeProvider.isDark ? _kDarkStyle : null);
+  // }
 
   // ── Helpers ───────────────────────────────────────────────────
   String _categoryLabel(String c) => c == 'CR'
@@ -504,6 +516,12 @@ class _MapsScreenState extends State<MapsScreen> {
   // ── BUILD ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeProvider>().isDark;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateMapStyle(isDark);
+    });
+
     return Scaffold(
       body: Stack(children: [
 
@@ -511,7 +529,10 @@ class _MapsScreenState extends State<MapsScreen> {
         GoogleMap(
           initialCameraPosition: _initCamera,
           markers: _markers,
-          onMapCreated: (c) => _mapCtrl.complete(c),
+          onMapCreated: (c) {
+            _mapCtrl.complete(c);
+            if (isDark) {c.setMapStyle(_kDarkStyle);} 
+          },
           onCameraMove: _onCameraMove,
           onCameraIdle: _onCameraIdle,
           myLocationButtonEnabled: false,
@@ -566,7 +587,7 @@ class _MapsScreenState extends State<MapsScreen> {
                 child: Container(
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF222222) : Colors.white,
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: const [
                       BoxShadow(
@@ -581,11 +602,13 @@ class _MapsScreenState extends State<MapsScreen> {
                       child: TextField(
                         controller: _searchCtrl,
                         onChanged: (_) => _applyFilters(),
-                        style: const TextStyle(fontSize: 14),
-                        decoration: const InputDecoration(
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 14),
+                        decoration: InputDecoration(
                           hintText: 'Search species, habitat, threats, group,...',
                           hintStyle: TextStyle(
-                              color: Colors.black38, fontSize: 14),
+                              color: isDark ? Colors.white38 : Colors.black38, fontSize: 14),
                           border: InputBorder.none,
                           isDense: true,
                         ),
@@ -602,8 +625,8 @@ class _MapsScreenState extends State<MapsScreen> {
                     //   ),
                     // ),
                     const SizedBox(width: 10),
-                    const Icon(Icons.search,
-                        color: Colors.black54, size: 22),
+                    Icon(Icons.search,
+                        color: isDark ? Colors.white38 : Colors.black54, size: 22),
                     const SizedBox(width: 14),
                   ]),
                 ),
@@ -615,7 +638,7 @@ class _MapsScreenState extends State<MapsScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 12),
                   constraints: const BoxConstraints(maxHeight: 250),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF222222) : Colors.white,
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: const [
                       BoxShadow(
@@ -638,10 +661,18 @@ class _MapsScreenState extends State<MapsScreen> {
                               ? Colors.red
                               : Colors.orange,
                         ),
-                        title: Text(s.commonName),
+                        title: Text(
+                          s.commonName,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
                         subtitle: Text(
                           "${s.scientificName}\n${_categoryLabel(s.category)} • ${s.group}",
                           maxLines: 2,
+                          style: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black54,
+                          ),
                         ),
                         isThreeLine: true,
                         onTap: () async {
@@ -675,8 +706,8 @@ class _MapsScreenState extends State<MapsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     "Showing ${_filtered.length} of ${vietnamSpecies.length} species",
-                    style: const TextStyle(
-                      color: Colors.black54,
+                    style: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black54,
                       fontSize: 12,
                     ),
                   ),
@@ -750,30 +781,35 @@ class _MapsScreenState extends State<MapsScreen> {
         Positioned(
           bottom: 72,
           left: 16,
-          child: GestureDetector(
-            onTap: _toggleDark,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: context.watch<ThemeProvider>().isDark
-                    ? const Color(0xFF222222)
-                    : Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 8)
-                ],
-              ),
-              child: Icon(
-                context.watch<ThemeProvider>().isDark
-                    ? Icons.wb_sunny_outlined
-                    : Icons.nightlight_round,
-                color: context.watch<ThemeProvider>().isDark ? Colors.white70 : Colors.black54,
-                size: 22,
-              ),
-            ),
-          ),
+          child: DarkModeToggle(),
         ),
+        // Positioned(
+        //   bottom: 72,
+        //   left: 16,
+        //   child: GestureDetector(
+        //     onTap: _toggleDark,
+        //     child: Container(
+        //       width: 44,
+        //       height: 44,
+        //       decoration: BoxDecoration(
+        //         color: context.watch<ThemeProvider>().isDark
+        //             ? const Color(0xFF222222)
+        //             : Colors.white,
+        //         shape: BoxShape.circle,
+        //         boxShadow: const [
+        //           BoxShadow(color: Colors.black26, blurRadius: 8)
+        //         ],
+        //       ),
+              // child: Icon(
+              //   context.watch<ThemeProvider>().isDark
+              //       ? Icons.wb_sunny_outlined
+              //       : Icons.nightlight_round,
+              //   color: context.watch<ThemeProvider>().isDark ? Colors.white70 : Colors.black54,
+              //   size: 22,
+              // ),
+        //     ),
+        //   ),
+        // ),
 
         // ── Species panel (shown after marker tap) ────────────────
         if (_selected != null)
@@ -799,7 +835,7 @@ class _MapsScreenState extends State<MapsScreen> {
         host: widget.host,
         screens: widget.screens,
         isConnected: widget.isConnected,
-        isDark: context.watch<ThemeProvider>().isDark,
+        // isDark: context.watch<ThemeProvider>().isDark,
       ),
     );
   }
@@ -810,13 +846,20 @@ class _MapsScreenState extends State<MapsScreen> {
     required List<String> values,
     required ValueChanged<String> onChanged,
   }) {
+    final isDark = context.watch<ThemeProvider>().isDark;
+    
     return PopupMenuButton<String>(
       onSelected: onChanged,
       itemBuilder: (_) => values
           .map(
             (v) => PopupMenuItem(
               value: v,
-              child: Text(v),
+              child: Text(
+                v,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
             ),
           )
           .toList(),
@@ -826,7 +869,7 @@ class _MapsScreenState extends State<MapsScreen> {
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF222222) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
@@ -1150,6 +1193,7 @@ const String _kDarkStyle = '''[
   {"featureType":"water","elementType":"geometry",
    "stylers":[{"color":"#000000"}]}
 ]''';
+
 
 
 // import 'package:flutter/material.dart';

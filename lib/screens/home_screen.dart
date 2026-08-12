@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:provider/provider.dart';
 import 'settings_screen.dart';
 import '../providers/nav_bar_provider.dart';
+import '../providers/theme_provider.dart';
+import '../widgets/dark_mode_toggle.dart';
 
 class HomeScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -52,8 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeProvider>().isDark;
+    final bgColor = isDark ? const Color(0xFF0F0F0F) : const Color(0xFFF5F5F0);
+    final textColor = isDark ? Colors.white : Colors.black;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final cardColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF222222) : const Color(0xFFDDDDDD);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F0),
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -90,11 +100,11 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 40),
 
               // ── Greeting text ────────────────────────────────────
-              const Text(
+              Text(
                 'Hey there,\nnice to meet you,\nI\'m Angela.\nReady to dive in?\nLet\'s explore the living\nworld together and see\nwhich species need our\nhelp.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Color(0xFF2A2A2A),
+                  color: textColor,
                   fontSize: 19,
                   fontWeight: FontWeight.w400,
                   height: 1.65,
@@ -108,10 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Status:',
                     style: TextStyle(
-                      color: Color(0xFF555555),
+                      color: secondaryTextColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                     ),
@@ -121,9 +131,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFDDDDDD)),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Text(
                       _isConnected ? 'Connected' : 'Not Connected',
@@ -147,14 +157,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: OutlinedButton(
                   onPressed: _openSettings,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2A2A2A),
+                    foregroundColor: isDark ? Colors.white : Colors.black,
                     side: BorderSide(
-                      color: _isConnected
-                          ? Colors.grey.shade300
-                          : Colors.green.shade300,
+                      color: isDark ? const Color(0xFF444444) 
+                      : (_isConnected ? Colors.grey.shade300 : Colors.green.shade300),
                     ),
-                    backgroundColor: 
-                      _isConnected ? Colors.grey : Colors.green,
+                    backgroundColor: isDark ? const Color(0xFF222222) 
+                    : (_isConnected ? Colors.grey : Colors.green),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -171,6 +180,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const Spacer(flex: 2),
+
+              // ── Dark mode toggle (bottom-left, above nav bar) ─────────
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 24),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: DarkModeToggle(),
+                ),
+              ),
             ],
           ),
         ),

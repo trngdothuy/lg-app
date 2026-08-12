@@ -1,9 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dartssh2/dartssh2.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
+
+import '../providers/theme_provider.dart';
 import '../../providers/nav_bar_provider.dart';
 import '../services/species_service.dart';
 import '../data/species_data.dart';
+import '../widgets/dark_mode_toggle.dart';
 
 class ToolsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -25,7 +30,7 @@ class ToolsScreen extends StatefulWidget {
 
 class _ToolsScreenState extends State<ToolsScreen> {
 
-  bool _isDarkMode  = false;
+  // bool _isDarkMode  = false;
   String? _busyBtn;  // label of button currently running
   String _status = '';
   bool _preloading = false;
@@ -220,8 +225,11 @@ class _ToolsScreenState extends State<ToolsScreen> {
   // ── BUILD ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final bg = _isDarkMode ? const Color(0xFF0F0F0F) : Colors.white;
-    final textColor = _isDarkMode ? Colors.white : const Color(0xFF1A1A1A);
+    // final bg = _isDarkMode ? const Color(0xFF0F0F0F) : Colors.white;
+    // final textColor = _isDarkMode ? Colors.white : const Color(0xFF1A1A1A);
+    final isDark = context.watch<ThemeProvider>().isDark;
+    final bg = isDark ? const Color(0xFF0F0F0F) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A1A);
 
     return Scaffold(
       backgroundColor: bg,
@@ -261,7 +269,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
                 _status,
                 style: TextStyle(
                   fontSize: 13,
-                  color: _isDarkMode ? Colors.white70 : Colors.black54,
+                  color: isDark ? Colors.white70 : Colors.black54,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -328,21 +336,20 @@ class _ToolsScreenState extends State<ToolsScreen> {
 
             // ── Dark mode toggle (bottom left) ───────────────────
             Padding(
-              padding: const EdgeInsets.only(left: 24, bottom: 4),
+              padding: const EdgeInsets.only(left: 24, bottom: 24),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () => setState(() => _isDarkMode = !_isDarkMode),
-                  child: Icon(
-                    _isDarkMode
-                        ? Icons.wb_sunny_outlined
-                        : Icons.nightlight_round,
-                    color: _isDarkMode ? Colors.white54 : Colors.black45,
-                    size: 26,
-                  ),
+                child: DarkModeToggle(),
                 ),
               ),
-            ),
+            // ),
+
+            // ── Dark mode toggle (bottom-left, above nav bar) ─────────
+        // Positioned(
+        //   bottom: 72,
+        //   left: 16,
+        //   child: DarkModeToggle(),
+        // ),
           ],
         ),
       ),
@@ -354,7 +361,7 @@ class _ToolsScreenState extends State<ToolsScreen> {
         host: widget.host,
         screens: widget.screens,
         isConnected: widget.isConnected,
-        isDark: _isDarkMode,
+        // isDark: _isDarkMode,
         ),
     );
   }
@@ -377,11 +384,12 @@ class _ToolsScreenState extends State<ToolsScreen> {
     double? width,
     bool isRed = false,
   }) {
+    final isDark = context.watch<ThemeProvider>().isDark;
     final busy    = _busyBtn == label;
     final enabled = widget.isConnected && _busyBtn == null;
     final color   = isRed
         ? const Color(0xFFB71C1C)
-        : _isDarkMode
+        : isDark
             ? const Color(0xFF3A3A3A)
             : const Color(0xFF3D3D4E);
 
