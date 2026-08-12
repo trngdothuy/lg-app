@@ -14,12 +14,14 @@ class SpeciesStory {
   final String ttsScript;
   final Map<String,String> iucnFields;
   final List<Map<String, String>>? highlights; // to highlight narrative text on screen (optional)
+  final List<Map<String, dynamic>>? trend; // to display trend information (optional)
 
   const SpeciesStory({
     required this.narrative,
     required this.ttsScript,
     required this.iucnFields,
     this.highlights,
+    this.trend,
   });
 
   String get habitat =>
@@ -205,6 +207,9 @@ Future<void> preloadAllStories(
           highlights: (parsed['highlights'] as List?)
               ?.map((item) => Map<String, String>.from(item))
               .toList(),
+          trend: (parsed['trend'] as List?)
+              ?.map((item) => Map<String, dynamic>.from(item))
+              .toList(),
         );
       }
     } catch (e) {
@@ -241,7 +246,7 @@ Future<void> preloadAllStories(
       describe the qualitative trend (declining population, shrinking range)
       rather than fabricated statistics.
 
-      Return JSON with exactly three keys:
+      Return JSON with exactly four keys:
       "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
         bold the species name, emotional but factual tone about the decline.
       "tts_script": Plain text, max 70 words, spoken narration about the decline.
@@ -249,6 +254,9 @@ Future<void> preloadAllStories(
         the key facts. Each item is an object: {"text": "...", "type": "threat"|"action"|"fact"|"hope"}.
         Use "threat" for dangers, "action" for conservation steps, "fact" for
         neutral info (habitat, population), "hope" for positive/hopeful notes.
+      "trend": An array of exactly 4 objects representing rough relative population/range
+        size over time, oldest first: {"label": "Decades ago"|"Recent past"|"Today"|"Projected future",
+        "relative_size": 1-5, where 5 is largest}. This is an AI estimate, not verified data.
       Return ONLY valid JSON.
       ''';
     } else {
@@ -260,12 +268,15 @@ Future<void> preloadAllStories(
       well-known strategies for this type of species) that could help it recover.
       Hopeful but realistic tone.
 
-      Return JSON with exactly three keys:
+      Return JSON with exactly four keys:
       "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
         bold the species name, end on a hopeful, actionable note.
       "tts_script": Plain text, max 70 words, ending with a call to action.
       "highlights": An array of 3-5 short bullet points (max 12 words each) summarizing
         the key facts. Each item is an object: {"text": "...", "type": "threat"|"action"|"fact"|"hope"}.
+      "trend": An array of exactly 4 objects representing rough relative population/range
+        size over time, oldest first: {"label": "Decades ago"|"Recent past"|"Today"|"Projected future",
+        "relative_size": 1-5, where 5 is largest}. This is an AI estimate, not verified data.
         Use "threat" for dangers, "action" for conservation steps, "fact" for
         neutral info (habitat, population), "hope" for positive/hopeful notes.
       Return ONLY valid JSON.

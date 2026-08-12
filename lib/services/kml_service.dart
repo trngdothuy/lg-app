@@ -135,6 +135,19 @@ class KmlService {
 </div>''';
   }
 
+  static String _renderTrend(List<Map<String, dynamic>> trend) {
+    final dots = trend.map((stage) {
+      final size = (stage['relative_size'] as num).toInt().clamp(1, 5);
+      final label = stage['label'] as String? ?? '';
+      final circles = '●' * size;
+      return '<div style="text-align:center;flex:1;">'
+          '<div style="color:#EF5350;letter-spacing:2px;">$circles</div>'
+          '<div style="font-size:10px;opacity:.7;margin-top:2px;">$label</div></div>';
+    }).join();
+    return '<div style="display:flex;justify-content:space-between;margin:10px 0;">$dots</div>'
+        '<div style="font-size:9px;opacity:.5;text-align:center;">(AI-estimated trend)</div>';
+  }
+
   static const Map<String, String> _highlightColors = {
     'threat': '#EF5350', // red
     'action': '#66BB6A', // green

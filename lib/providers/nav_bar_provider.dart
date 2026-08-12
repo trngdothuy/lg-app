@@ -7,6 +7,7 @@ import '../screens/home_screen.dart';
 import '../screens/tools_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/maps_screen.dart';
+import '../screens/chat_screen.dart';
 import 'theme_provider.dart';
 
 class AppBottomNav extends StatelessWidget {
@@ -49,12 +50,19 @@ class AppBottomNav extends StatelessWidget {
         );
         break;
       case 2:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Chat coming soon"),
-          ),
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(
+        //     content: Text("Chat coming soon"),
+        //   ),
+        // );
+        // return;
+        target = ChatScreen(
+          client: client,
+          host: host,
+          screens: screens,
+          isConnected: isConnected,
         );
-        return;
+        break;
       case 3:
         target = ToolsScreen(
           client: client,
