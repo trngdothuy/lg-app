@@ -16,6 +16,7 @@ import '../services/lg_service.dart';
 import '../providers/nav_bar_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/dark_mode_toggle.dart';
+import '../widgets/quick_actions_bar.dart';
 
 class MapsScreen extends StatefulWidget {
   final SSHClient? client;
@@ -783,33 +784,18 @@ class _MapsScreenState extends State<MapsScreen> {
           left: 16,
           child: DarkModeToggle(),
         ),
-        // Positioned(
-        //   bottom: 72,
-        //   left: 16,
-        //   child: GestureDetector(
-        //     onTap: _toggleDark,
-        //     child: Container(
-        //       width: 44,
-        //       height: 44,
-        //       decoration: BoxDecoration(
-        //         color: context.watch<ThemeProvider>().isDark
-        //             ? const Color(0xFF222222)
-        //             : Colors.white,
-        //         shape: BoxShape.circle,
-        //         boxShadow: const [
-        //           BoxShadow(color: Colors.black26, blurRadius: 8)
-        //         ],
-        //       ),
-              // child: Icon(
-              //   context.watch<ThemeProvider>().isDark
-              //       ? Icons.wb_sunny_outlined
-              //       : Icons.nightlight_round,
-              //   color: context.watch<ThemeProvider>().isDark ? Colors.white70 : Colors.black54,
-              //   size: 22,
-              // ),
-        //     ),
-        //   ),
-        // ),
+
+        // ── Quick actions bar (bottom-right, above nav bar) ─────────
+        Positioned(
+          bottom: 72,
+          right: 16,
+          child: QuickActionsBar(
+            client: widget.client,
+            host: widget.host,
+            screens: widget.screens,
+            isConnected: widget.isConnected,
+          ),
+        ),
 
         // ── Species panel (shown after marker tap) ────────────────
         if (_selected != null)

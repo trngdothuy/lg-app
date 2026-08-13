@@ -120,35 +120,35 @@ class SpeciesService {
   }
 
   // Warms the cache for every species before the exhibit opens, so nobody
-// waits on a Gemini call while standing at the rig. Safe to re-run —
-// _cached() skips anything already generated.
-Future<void> preloadAllStories(
-    List<Species> species, {
-    void Function(int done, int total)? onProgress,
-    int? maxSpeciesThisRun, // for testing, limit how many species to process
-  }) async {
-    final targets = maxSpeciesThisRun != null
-        ? species.take(maxSpeciesThisRun).toList()
-        : species;
-    final total = targets.length * 3; // initial + history + future
-    int done = 0;
+  // waits on a Gemini call while standing at the rig. Safe to re-run —
+  // _cached() skips anything already generated.
+  Future<void> preloadAllStories(
+      List<Species> species, {
+      void Function(int done, int total)? onProgress,
+      int? maxSpeciesThisRun, // for testing, limit how many species to process
+    }) async {
+      final targets = maxSpeciesThisRun != null
+          ? species.take(maxSpeciesThisRun).toList()
+          : species;
+      final total = targets.length * 3; // initial + history + future
+      int done = 0;
 
-    for (final s in targets) {
-      final iucn = await fetchIucnData(s);
+      for (final s in targets) {
+        final iucn = await fetchIucnData(s);
 
-      try { await getStory(s, iucn); } catch (_) {}
-      done++; onProgress?.call(done, total);
-      await Future.delayed(const Duration(seconds: 20));
+        try { await getStory(s, iucn); } catch (_) {}
+        done++; onProgress?.call(done, total);
+        await Future.delayed(const Duration(seconds: 20));
 
-      try { await getThemedStory(s, iucn, 'history'); } catch (_) {}
-      done++; onProgress?.call(done, total);
-      await Future.delayed(const Duration(seconds: 20));
+        try { await getThemedStory(s, iucn, 'history'); } catch (_) {}
+        done++; onProgress?.call(done, total);
+        await Future.delayed(const Duration(seconds: 20));
 
-      try { await getThemedStory(s, iucn,'future'); } catch (_) {}
-      done++; onProgress?.call(done, total);
-      await Future.delayed(const Duration(seconds: 20));
+        try { await getThemedStory(s, iucn,'future'); } catch (_) {}
+        done++; onProgress?.call(done, total);
+        await Future.delayed(const Duration(seconds: 20));
+      }
     }
-  }
 
   Future<Map<String, dynamic>?> _callGemini(String prompt, {int retries = 2}) async {
     for (int attempt = 0; attempt <= retries; attempt++) {

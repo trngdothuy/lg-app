@@ -56,22 +56,22 @@ class AppBottomNav extends StatelessWidget {
         //   ),
         // );
         // return;
-        target = ChatScreen(
-          client: client,
-          host: host,
-          screens: screens,
-          isConnected: isConnected,
-        );
-        break;
-      case 3:
-        target = ToolsScreen(
-          client: client,
-          host: host,
-          screens: screens,
-          isConnected: isConnected,
-        );
-        break;
-      case 4:
+      //   target = ChatScreen(
+      //     client: client,
+      //     host: host,
+      //     screens: screens,
+      //     isConnected: isConnected,
+      //   );
+      //   break;
+      // case 3:
+      //   target = ToolsScreen(
+      //     client: client,
+      //     host: host,
+      //     screens: screens,
+      //     isConnected: isConnected,
+      //   );
+      //   break;
+      // case 4:
         target = SettingsScreen(
           client: client,
           host: host,
@@ -91,7 +91,7 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Home', 'Maps', 'Chat', 'Tools', 'Settings'];
+    const labels = ['Home', 'Maps', 'Settings'];
     final isDark = context.watch<ThemeProvider>().isDark;
 
     final bg      = isDark ? const Color(0xFF0F0F0F) : Colors.white;

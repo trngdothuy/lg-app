@@ -5,6 +5,7 @@ import 'settings_screen.dart';
 import '../providers/nav_bar_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/dark_mode_toggle.dart';
+import '../widgets/quick_actions_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   final SSHClient? client; // store the SSH client for later use
@@ -65,142 +66,118 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(flex: 2),
-
-              // ── Avatar ──────────────────────────────────────────
-              Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/avatar/avatar.gif',
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFE8C84A),
-                      child: const Icon(Icons.person, size: 60, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // ── Greeting text ────────────────────────────────────
-              Text(
-                'Hey there,\nnice to meet you,\nI\'m Angela.\nReady to dive in?\nLet\'s explore the living\nworld together and see\nwhich species need our\nhelp.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w400,
-                  height: 1.65,
-                  letterSpacing: 0.1,
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // ── Status row ───────────────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          children: [
+            // Layer 1: centered content
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    'Status:',
-                    style: TextStyle(
-                      color: secondaryTextColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                  const Spacer(flex: 2),
+                  // ── Avatar ──────────────────────────────────────────
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/avatar/avatar.gif',
+                        errorBuilder: (_, __, ___) => Container(
+                          color: const Color(0xFFE8C84A),
+                          child: const Icon(Icons.person, size: 60, color: Colors.white),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: borderColor),
+                  const SizedBox(height: 40),
+                  Text(
+                    'Hey there,\nnice to meet you,\nI\'m Angela.\nReady to dive in?\nLet\'s explore the living\nworld together and see\nwhich species need our\nhelp.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textColor, fontSize: 19, fontWeight: FontWeight.w400,
+                      height: 1.65, letterSpacing: 0.1,
                     ),
-                    child: Text(
-                      _isConnected ? 'Connected' : 'Not Connected',
-                      style: TextStyle(
-                        color: _isConnected
-                            ? const Color(0xFF4A8C5C)
-                            : const Color(0xFF555555),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                  ),
+                  const SizedBox(height: 40),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Status:', style: TextStyle(color: secondaryTextColor, fontSize: 15, fontWeight: FontWeight.w500)),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: cardColor, borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: borderColor),
+                        ),
+                        child: Text(
+                          _isConnected ? 'Connected' : 'Not Connected',
+                          style: TextStyle(
+                            color: _isConnected ? const Color(0xFF4A8C5C) : const Color(0xFF555555),
+                            fontSize: 13, fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: 160,
+                    child: OutlinedButton(
+                      onPressed: _openSettings,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isDark ? Colors.white : Colors.black,
+                        side: BorderSide(
+                          color: isDark ? const Color(0xFF444444)
+                              : (_isConnected ? Colors.grey.shade300 : Colors.green.shade300),
+                        ),
+                        backgroundColor: isDark ? const Color(0xFF222222)
+                            : (_isConnected ? Colors.grey : Colors.green),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                      ),
+                      child: Text(_isConnected ? 'Disconnect' : 'Connect'),
+                    ),
+                  ),
+                  const Spacer(flex: 2),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 24),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: DarkModeToggle(),
                     ),
                   ),
                 ],
               ),
+            ),
 
-              const SizedBox(height: 28),
-
-              // ── Connect button ───────────────────────────────────
-              SizedBox(
-                width: 160,
-                child: OutlinedButton(
-                  onPressed: _openSettings,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white : Colors.black,
-                    side: BorderSide(
-                      color: isDark ? const Color(0xFF444444) 
-                      : (_isConnected ? Colors.grey.shade300 : Colors.green.shade300),
-                    ),
-                    backgroundColor: isDark ? const Color(0xFF222222) 
-                    : (_isConnected ? Colors.grey : Colors.green),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  child: Text(
-                    _isConnected ? 'Disconnect' : 'Connect',
-                  ),
-                ),
+            // ── Layer 2: floating quick actions, positioned relative to the Stack ──
+            Positioned(
+              bottom: 24,
+              right: 16,
+              child: QuickActionsBar(
+                client: widget.client, host: widget.host,
+                screens: widget.screens, isConnected: widget.isConnected,
               ),
-
-              const Spacer(flex: 2),
-
-              // ── Dark mode toggle (bottom-left, above nav bar) ─────────
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 24),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: DarkModeToggle(),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
 
-      // ── Bottom navigation bar ────────────────────────────────────
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 0,
-        client: _client,
-        host: _host,
-        screens: _screens,
-        isConnected: _isConnected,
+        client: _client, host: _host, screens: _screens, isConnected: _isConnected,
       ),
     );
   }

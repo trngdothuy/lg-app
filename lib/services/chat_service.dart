@@ -10,6 +10,14 @@ class ChatMessage {
 }
 
 class ChatService {
+  static final ChatService _instance = ChatService._internal();
+  factory ChatService() => _instance;
+  ChatService._internal();
+
+  final List<ChatMessage> messages = []; // lives as long as the app runs
+
+  void clearConversation() => messages.clear();
+  
   static const _geminiUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
 
