@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 40),
                   Text(
-                    'Hey there,\nnice to meet you,\nI\'m Angela.\nReady to dive in?\nLet\'s explore the living\nworld together and see\nwhich species need our\nhelp.',
+                    'Hey there,\nnice to meet you,\nI\'m Sora.\nReady to dive in?\nLet\'s explore the living\nworld together and see\nwhich species need our\nhelp.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: textColor, fontSize: 19, fontWeight: FontWeight.w400,

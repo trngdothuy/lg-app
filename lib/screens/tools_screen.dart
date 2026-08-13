@@ -304,32 +304,32 @@ class _ToolsScreenState extends State<ToolsScreen> {
             const SizedBox(height: 28),
            
             // Preload remaining stories button (dev only) ─────────────────────
-            ElevatedButton(
-              onPressed:_preloading ? null : () async {
-                setState(() => _preloading = true);
-                print('Preloading remaining stories...');
-                final svc = SpeciesService();
-                await svc.preloadAllStories(
-                  vietnamSpecies, 
-                  onProgress: (done, total) {
-                  print('Preload progress: $done / $total');
-                });
-                print('Preload complete.');
-                setState(() => _preloading = false);
-              },
-              child: Text(_preloading ? 'Preloading...' : 'Preload remaining stories (dev only)'),
-            ),
+            // ElevatedButton(
+            //   onPressed:_preloading ? null : () async {
+            //     setState(() => _preloading = true);
+            //     print('Preloading remaining stories...');
+            //     final svc = SpeciesService();
+            //     await svc.preloadAllStories(
+            //       vietnamSpecies, 
+            //       onProgress: (done, total) {
+            //       print('Preload progress: $done / $total');
+            //     });
+            //     print('Preload complete.');
+            //     setState(() => _preloading = false);
+            //   },
+            //   child: Text(_preloading ? 'Preloading...' : 'Preload remaining stories (dev only)'),
+            // ),
 
              // Export cache button (dev only) ─────────────────────────────
-            ElevatedButton(
-              onPressed: () async {
-                print('Exporting story cache...');
-                final path = await SpeciesService().exportCacheToFile();
-                print('Cache exported to: $path');
-                // optionally show a SnackBar with the path too
-              },
-              child: const Text('Export story cache (dev only)'),
-            ),
+            // ElevatedButton(
+            //   onPressed: () async {
+            //     print('Exporting story cache...');
+            //     final path = await SpeciesService().exportCacheToFile();
+            //     print('Cache exported to: $path');
+            //     // optionally show a SnackBar with the path too
+            //   },
+            //   child: const Text('Export story cache (dev only)'),
+            // ),
 
 
             const Spacer(flex: 2),

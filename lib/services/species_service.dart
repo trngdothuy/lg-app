@@ -163,6 +163,9 @@ class SpeciesService {
                   'temperature': 0.75,
                   'maxOutputTokens': 3072,
                   'responseMimeType': 'application/json',
+                  // 'thinkingConfig': {
+                  //   'thinkingBudget': 0, // disable thinking — this task doesn't need it, and thinking tokens were eating your output budget
+                  // },
                 },
               }),
             )
