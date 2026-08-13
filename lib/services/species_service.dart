@@ -161,7 +161,7 @@ class SpeciesService {
                 'contents': [{'parts': [{'text': prompt}]}],
                 'generationConfig': {
                   'temperature': 0.75,
-                  'maxOutputTokens': 2048,
+                  'maxOutputTokens': 3072,
                   'responseMimeType': 'application/json',
                 },
               }),
@@ -246,7 +246,7 @@ class SpeciesService {
       describe the qualitative trend (declining population, shrinking range)
       rather than fabricated statistics.
 
-      Return JSON with exactly four keys:
+      Return JSON with exactly four keys, only using single quotes for HTML attributes, never double quotes:
       "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
         bold the species name, emotional but factual tone about the decline.
       "tts_script": Plain text, max 70 words, spoken narration about the decline.
@@ -268,7 +268,7 @@ class SpeciesService {
       well-known strategies for this type of species) that could help it recover.
       Hopeful but realistic tone.
 
-      Return JSON with exactly four keys:
+      Return JSON with exactly four keys, only using single quotes for HTML attributes, never double quotes:
       "narrative": HTML (no html/body/head tags), max 140 words, <p> tags,
         bold the species name, end on a hopeful, actionable note.
       "tts_script": Plain text, max 70 words, ending with a call to action.
@@ -361,7 +361,9 @@ Return a JSON object with exactly three keys:
 
 "narrative": HTML content (no html/body/head tags) for a large display screen.
   Max 160 words. Use <p> tags. Bold the species name. Show status in
-  ${s.category == 'CR' ? '#CC0000' : '#E53935'} colour. Emotional and educational tone.
+  ${s.category == 'CR' ? '#CC0000' : '#E53935'} colour using single-quotes HTML attributes, e.g. <span style='color:#CC0000;font-weight:bold;'>. Never use
+  double quotes inside the HTML — only single quotes for attributes, since
+  this HTML sits inside a JSON string value. Emotional and educational tone.
   Only use facts from the data above.
 
 "tts_script": Plain text (no HTML). Max 70 words. Spoken aloud by a narrator.

@@ -419,44 +419,214 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // ── Layer 1: your existing scrollable content ────────────
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ...everything currently in here stays exactly the same...
-                  // ...down through the "Connect to LG" button and the SizedBox(height: 32)...
+            // Layer 1: scrolling content
+          SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Connected badge (top right) ──────────────────────
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 20, top: 12),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.check,
+                      size: 14,
+                      color: _isConnected
+                          ? const Color(0xFF2E7D32)
+                          : Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isConnected ? 'Connected' : 'Not Connected',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _isConnected
+                            ? const Color(0xFF2E7D32)
+                            : Colors.grey,
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
 
-                  // ── Dark mode toggle (bottom-left) ───────────────────
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 24),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: DarkModeToggle(),
+                const SizedBox(height: 12),
+
+                // ── Scan QR Code button ──────────────────────────────
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _openQrScanner();
+                  },
+                  icon: Icon(Icons.qr_code_scanner_outlined,
+                      color: secondaryText,),
+                  label: Text(
+                    'Scan QR Code',
+                    style: TextStyle(
+                      color: primaryText,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  // ← delete the Positioned(...) QuickActionsBar block from here
-                ],
-              ),
-            ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: fieldColor,
+                    side: BorderSide.none,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
 
-            // ── Layer 2: floating quick actions, fixed regardless of scroll ──
-            Positioned(
-              bottom: 24,
-              right: 16,
-              child: QuickActionsBar(
-                client: widget.client, host: widget.host,
-                screens: widget.screens, isConnected: widget.isConnected,
-              ),
+                const SizedBox(height: 24),
+
+                // ── "or" divider ─────────────────────────────────────
+                const Center(
+                  child: Text(
+                    'or',
+                    style: TextStyle(
+                      color: Color(0xFF888888),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Input fields ─────────────────────────────────────
+                _buildField(
+                  label: 'Host',
+                  hint: 'Enter your host IP',
+                  controller: _hostController,
+                ),
+                _buildField(
+                  label: 'Port',
+                  controller: _portController,
+                  isNumber: true,
+                ),
+                _buildField(
+                  label: 'User',
+                  controller: _userController,
+                ),
+                _buildField(
+                  label: 'Pass',
+                  controller: _passwordController,
+                  isPassword: true,
+                ),
+                _buildField(
+                  label: 'Screen',
+                  controller: _screensController,
+                  isNumber: true,
+                ),
+
+                // ── Error message ────────────────────────────────────
+                if (_errorMessage.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _errorMessage,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+
+                // Show connectivity message
+                if (_connectionStatus.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      _connectionStatus,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 28),
+
+                // ── Connect to LG button ─────────────────────────────
+                Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: 200,
+                    child: ElevatedButton(
+                      onPressed: _isConnected ? _disconnect : _connect,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark ? const Color(0xFF2A2A2A) : (_isConnected ? Colors.grey : const Color(0xFF4A7C59)),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            const Color(0xFF4A7C59).withOpacity(0.5),
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: _isConnecting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                            _isConnected ? "Disconnect" : 'Connect to LG',
+                            ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // OutlinedButton(
+                //   onPressed: _preloading ? null : _preloadStories,
+                //   child: Text(_preloading
+                //       ? 'Preloading $_preloadDone / $_preloadTotal...'
+                //       : 'Preload All Species Stories'),
+                // ),
+
+                // ── Dark mode toggle (bottom-left, above nav bar) ─────────
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 24),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: DarkModeToggle(),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+
+          // Layer 2: Quick actions bar (bottom-left, above nav bar) ─────────
+              Positioned(
+                bottom: 24,
+                right: 16,
+                child: QuickActionsBar(
+                  client: widget.client, host: widget.host,
+                  screens: widget.screens, isConnected: widget.isConnected,
+                ),
+              ),
+          ]
         ),
       ),
 
+      // ── Bottom navigation bar ────────────────────────────────────
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 4,
-        client: _client, host: host, screens: screens, isConnected: _isConnected,
+        client: _client,
+        host: host,
+        screens: screens,
+        isConnected: _isConnected,
       ),
     );
   }
