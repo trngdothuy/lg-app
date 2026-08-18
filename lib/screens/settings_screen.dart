@@ -183,9 +183,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       await client.authenticated;
 
-      setState(() {
-        _connectionStatus = 'Connected. Preparing Liquid Galaxy...';
-      });
+      // setState(() {
+      //   _connectionStatus = 'Connected. Preparing Liquid Galaxy...';
+      // });
 
       // fly to Vietnam and send logo only after successful connection
       await _flyToVietnam(client);

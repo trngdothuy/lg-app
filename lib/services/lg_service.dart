@@ -127,25 +127,13 @@ class LGService {
 
   // ── Paw markers, shown on nav to the map screen ─────────────────
   Future<void> initialize(List<Species> species) async {
-    await _writeRemoteFile(
-      '/var/www/html/kml/species.kml',
-      KmlService.buildPawIconsKml(species),
-    );
-    // Reset (not append) kmls.txt so re-connecting doesn't duplicate layers.
-    // flyTo() below never touches this file — that was the bug.
-    await _writeRemoteFile(
-      '/var/www/html/kmls.txt',
-      'http://lg1:81/kml/species.kml',
-    );
+    final kml = KmlService.buildPawIconsKml(species);
+    await writeToSlave(1, kml);
   }
 
-  // Call this from _applyFilters() if you want the rig's paw set to
-  // track the phone's current filter/search results.
   Future<void> updateMarkers(List<Species> species) async {
-    await _writeRemoteFile(
-      '/var/www/html/kml/species.kml',
-      KmlService.buildPawIconsKml(species),
-    );
+    final kml = KmlService.buildPawIconsKml(species);
+    await writeToSlave(1, kml);
   }
 
   // ── Camera sync: phone map move → rig flies too ─────────────────
@@ -203,28 +191,39 @@ class LGService {
     }
   }
 
+  Future<void> _forceRefresh(int slaveNumber) async {
+    final s = '<href>##LG_PHPIFACE##kml\\/slave_$slaveNumber.kml<\\/href>';
+    final r = '$s<refreshMode>onInterval<\\/refreshMode>'
+        '<refreshInterval>2<\\/refreshInterval>';
+    await _run(
+      "sshpass -p lg ssh -t lg$slaveNumber@lg$slaveNumber "
+      "'echo lg | sudo -S sed -i \"s/$r/$s/\" ~/earth/kml/slave/myplaces.kml'",
+    );
+    await _run(
+      "sshpass -p lg ssh -t lg$slaveNumber@lg$slaveNumber "
+      "'echo lg | sudo -S sed -i \"s/$s/$r/\" ~/earth/kml/slave/myplaces.kml'",
+    );
+  }
+
+  Future<void> writeToSlave(int slaveNumber, String kmlContent) async {
+    await _writeRemoteFile('/var/www/html/kml/slave_$slaveNumber.kml', kmlContent);
+    await _forceRefresh(slaveNumber);
+  }
+
   // ── Tap a pin on the phone → rig flies + shows info balloon ─────
   Future<void> showSpecies(Species species, SpeciesStory story) async {
-    await _writeRemoteFile(
-      '/var/www/html/kml/info.kml',
-      KmlService.buildSpeciesInfoKml(species, story, imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg'),
-    );
-    await _sendToScreen(_rightMostScreen, 'http://lg1:81/kml/info.kml');
+    final kml = KmlService.buildSpeciesInfoKml(species, story,
+        imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg');
+    await writeToSlave(_rightMostScreen, kml);
   }
 
   Future<void> showHistory(Species species, SpeciesStory story) async {
-    await _writeRemoteFile(
-      '/var/www/html/kml/info.kml',
-      KmlService.buildSpeciesInfoKml(species, story, title: 'History', imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg'),
-    );
-    await _sendToScreen(_rightMostScreen, 'http://lg1:81/kml/info.kml');
+    final kml = KmlService.buildSpeciesInfoKml(species, story, title: 'History', imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg');
+    await writeToSlave(_rightMostScreen, kml);
   }
 
   Future<void> showFuture(Species species, SpeciesStory story) async {
-    await _writeRemoteFile(
-      '/var/www/html/kml/info.kml',
-      KmlService.buildSpeciesInfoKml(species, story, title: 'Future Outlook and Actions', imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg'),
-    );
-    await _sendToScreen(_rightMostScreen, 'http://lg1:81/kml/info.kml');
+    final kml = KmlService.buildSpeciesInfoKml(species, story, title: 'Future Outlook and Actions', imageUrl: 'http://lg1:81/images/species/${species.internalTaxonId}.jpg');
+    await writeToSlave(_rightMostScreen, kml);
   }
 }
