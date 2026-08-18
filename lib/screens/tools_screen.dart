@@ -138,19 +138,18 @@ class _ToolsScreenState extends State<ToolsScreen> {
   Future<void> _cleanKml() async {
     const empty = '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document></Document></kml>''';
-    final b64 = _b64(empty);
-    await _run("echo '$b64' | base64 -d > /var/www/html/kml/active.kml");
-    await _run("echo 'http://lg1:81/kml/active.kml' > /var/www/html/kmls.txt");
-    await _setRefresh();
+    for (var i = 1; i <= widget.screens; i++) {
+    await _run("echo '${_b64(empty)}' | base64 -d > /var/www/html/kml/slave_$i.kml");
+    }
+    await _setRefresh(); 
   }
 
   /// Clear logo overlays (write empty KML to left slave screen)
   Future<void> _cleanLogos() async {
     const empty = '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document></Document></kml>''';
-    final b64 = _b64(empty);
     final left = widget.screens;
-    await _run("echo '$b64' | base64 -d > /var/www/html/kml/slave_$left.kml");
+    await _run("echo '${_b64(empty)}' | base64 -d > /var/www/html/kml/slave_$left.kml");
     await _setRefresh();
   }
 
