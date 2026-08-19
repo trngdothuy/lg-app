@@ -8,6 +8,73 @@ class KmlService {
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;');
 
+  // Wraps any number of inner KML fragments (Style/Placemark/ScreenOverlay
+  // blocks, no <?xml>/<kml>/<Document> wrapper) into one valid document.
+  static String wrapDocument(List<String> innerParts) {
+    final b = StringBuffer();
+    b.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    b.writeln('<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">');
+    b.writeln('<Document>');
+    for (final part in innerParts) {
+      b.writeln(part);
+    }
+    b.writeln('</Document>');
+    b.writeln('</kml>');
+    return b.toString();
+  }
+
+  // ── Inner (composable) versions ──────────────────────────────
+  static String buildPawIconsKmlInner(
+    List<Species> species, {
+    String iconHref = 'http://lg1:81/images/paw.png',
+  }) {
+    final b = StringBuffer();
+    b.writeln('''
+  <Style id="pawIcon">
+    <IconStyle><scale>1.2</scale><Icon><href>$iconHref</href></Icon></IconStyle>
+    <LabelStyle><scale>0</scale></LabelStyle>
+  </Style>''');
+    for (final s in species) {
+      b.writeln('''
+  <Placemark>
+    <name>${_escape(s.commonName)}</name>
+    <styleUrl>#pawIcon</styleUrl>
+    <Point><coordinates>${s.lng},${s.lat},0</coordinates></Point>
+  </Placemark>''');
+    }
+    return b.toString();
+  }
+
+  static String buildSpeciesInfoKmlInner(
+    Species species, SpeciesStory story, {String title = '', String? imageUrl}
+  ) {
+    final heading = title.isEmpty ? _categoryLabel(species.category) : title;
+    return '''
+  <Style id="infoBalloon">
+    <BalloonStyle>
+      <bgColor>ff251b0e</bgColor>
+      <textColor>ffffffff</textColor>
+      <text><![CDATA[\$[description]]]></text>
+    </BalloonStyle>
+  </Style>
+  <Placemark>
+    <name>${_escape(species.commonName)}</name>
+    <styleUrl>#infoBalloon</styleUrl>
+    <description><![CDATA[${_infoHtml(species, story, heading, imageUrl)}]]></description>
+    <gx:balloonVisibility>1</gx:balloonVisibility>
+    <Point><coordinates>${species.lng},${species.lat},0</coordinates></Point>
+  </Placemark>''';
+  }
+
+  static String buildLogoOverlayInner(String logoUrl) => '''
+  <ScreenOverlay>
+    <name>LG Logo</name>
+    <Icon><href>$logoUrl</href></Icon>
+    <overlayXY x="0" y="1" xunits="fraction" yunits="fraction"/>
+    <screenXY x="0.02" y="0.95" xunits="fraction" yunits="fraction"/>
+    <size x="300" y="0" xunits="pixels" yunits="pixels"/>
+  </ScreenOverlay>''';
+
   // ── Persistent paw markers ──────────
   static String buildPawIconsKml(
     List<Species> species, {
