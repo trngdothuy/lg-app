@@ -43,6 +43,8 @@ class _MapsScreenState extends State<MapsScreen> {
   
   Map<String, String>? _iucnData;
 
+  bool _lgCameraSyncEnabled = false;
+
   CameraPosition get _initCamera {
   if (vietnamSpecies.isEmpty) {
     return const CameraPosition(
@@ -317,7 +319,12 @@ class _MapsScreenState extends State<MapsScreen> {
     );
 
     // Fire-and-forget: fly LG immediately
+    _lgCameraSyncEnabled = true;
     _lg?.flyTo(lat: species.lat, lng: species.lng, range: 15000, tilt: 45);
+    // print("Fly to from marker tap");
+
+
+
 
     // Pipeline: IUCN → Gemini → LG + TTS
     try {
@@ -386,6 +393,8 @@ class _MapsScreenState extends State<MapsScreen> {
 
     _lastCamera = pos;
 
+    if (!_lgCameraSyncEnabled) return;
+
     final now = DateTime.now();
 
     const syncInterval = Duration(milliseconds: 800);
@@ -408,7 +417,7 @@ class _MapsScreenState extends State<MapsScreen> {
   }
 
   void _onCameraIdle() {
-    if (_lastCamera == null) return;
+    if (_lastCamera == null || !_lgCameraSyncEnabled) return;
 
     _lg?.flyTo(
       lat: _lastCamera!.target.latitude,

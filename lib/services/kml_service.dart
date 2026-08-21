@@ -123,23 +123,79 @@ class KmlService {
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
 <name>Fly to species</name>
-    <gx:duration>0.5</gx:duration>
-		<gx:flyToMode>smooth</gx:flyToMode>
-    <Placemark>
-      <name>Species</name>
-      <LookAt>
-        <longitude>$lng</longitude>
-        <latitude>$lat</latitude>
-        <range>$range</range>
-        <tilt>$tilt</tilt>
-        <heading>$heading</heading>
-      </LookAt>
-      <Point>
-        <coordinates>$lng,$lat,$tilt</coordinates>
-      </Point>
-    </Placemark>
+  <LookAt>
+    <longitude>$lng</longitude>
+    <latitude>$lat</latitude>
+    <range>$range</range>
+    <tilt>$tilt</tilt>
+    <heading>$heading</heading>
+  </LookAt>
 </Document>
 </kml>''';
+  }
+
+  static String buildMasterKml({
+    required List<Species> species,
+    required String iconHref,
+    required double lat,
+    required double lng,
+    required double range,
+    required double tilt,
+    required double heading,
+  }) {
+    final b = StringBuffer();
+
+    b.writeln('<?xml version="1.0" encoding="UTF-8"?>');
+    b.writeln(
+      '<kml xmlns="http://www.opengis.net/kml/2.2" '
+      'xmlns:gx="http://www.google.com/kml/ext/2.2">',
+    );
+    b.writeln('<Document>');
+    b.writeln('<name>Species Master</name>');
+
+    // Camera
+    b.writeln('''
+    <LookAt>
+      <longitude>$lng</longitude>
+      <latitude>$lat</latitude>
+      <range>$range</range>
+      <tilt>$tilt</tilt>
+      <heading>$heading</heading>
+    </LookAt>
+    ''');
+
+    // Paw style
+    b.writeln('''
+    <Style id="pawIcon">
+      <IconStyle>
+        <scale>1.2</scale>
+        <Icon>
+          <href>$iconHref</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0</scale>
+      </LabelStyle>
+    </Style>
+    ''');
+
+    // Paws
+    for (final s in species) {
+      b.writeln('''
+    <Placemark>
+      <name>${_escape(s.commonName)}</name>
+      <styleUrl>#pawIcon</styleUrl>
+      <Point>
+        <coordinates>${s.lng},${s.lat},0</coordinates>
+      </Point>
+    </Placemark>
+    ''');
+    }
+
+    b.writeln('</Document>');
+    b.writeln('</kml>');
+
+    return b.toString();
   }
 
   // ── Species info balloon shown on flyTo ─────────────────────────
@@ -190,11 +246,11 @@ class KmlService {
     final imageTag = imageUrl != null
         ? '<img src="$imageUrl" style="width:100%;border-radius:12px;margin-bottom:2vh;">'
         : '';
-    
+
     final body = (story.highlights != null && story.highlights!.isNotEmpty)
         ? _renderHighlights(story.highlights!)
         : '<div style="line-height:1.6;font-size:clamp(14px,2.2vw;26px);">${story.narrative}</div>';
-    
+
     return '''
 <div style="font-family:Arial;width:90vw;max-width:900px;background:#0E1B25;
             color:white;padding:3vw;border-radius:1.5vw;box-sizing:border-box;">
@@ -237,7 +293,7 @@ class KmlService {
       return '''
       <li style="margin-bottom:1.5vh;line-height:1.5;font-size:clamp(14px,2.2vw,24px);">
         <span style="color:$color;font-weight:bold;">•</span>
-        ${_escape(h['text'] ?? '')} 
+        ${_escape(h['text'] ?? '')}
       </li>''';
     }).join();
 

@@ -1,8 +1,10 @@
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:red_list_endangered_species_vietnam_app/data/species_data.dart';
 import 'dart:convert';
 import 'dart:async';
 import '../models/species.dart';
+import '../data/species_data.dart';
 import 'species_service.dart';
 import 'kml_service.dart';
 
@@ -17,6 +19,7 @@ class LGService {
 
   bool _flyBusy = false;
   Map<String, dynamic>? _pendingFly;
+  String _masterKml = '';
 
   Future<void> disconnect() async {}
 
@@ -82,6 +85,21 @@ class LGService {
     await _run(
       "sshpass -p lg ssh -o StrictHostKeyChecking=no lg$screenIndex@lg$screenIndex "
       "'echo \"$kmlUrl\" > /tmp/query.txt'",
+    );
+  }
+
+  Future<void> _reloadMaster() async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    final url =
+        'http://$host:81/kml/master.kml?v=$timestamp';
+
+    print('[LG] Loading master KML on screen 1_masterScreen');
+    print('[LG] URL: $url');
+
+    await _sendToScreen(
+      1,
+      url,
     );
   }
 
@@ -159,23 +177,25 @@ class LGService {
 
   // ── Paw markers, shown on nav to the map screen ─────────────────
   Future<void> initialize(List<Species> species) async {
-    final kml = KmlService.buildPawIconsKml(species, iconHref: 'http://$host:81/images/paw.png',);
+    _masterKml = KmlService.buildPawIconsKml(species, iconHref: 'http://$host:81/images/paw.png',);
 
     // CENTER / MASTER ONLY
     await _writeRemoteFile(
       '/var/www/html/kml/master.kml',
-      kml,
+      _masterKml,
     );
-    await _forceRefreshScreen(1);
+    await _reloadMaster();
+    print('LG Master initialized with ${species.length} paw markers');
   }
 
   // Call this from _applyFilters() if you want the rig's paw set to
   // track the phone's current filter/search results.
   Future<void> updateMarkers(List<Species> species) async {
-    final kml = KmlService.buildPawIconsKml(species, iconHref: 'http://$host:81/images/paw.png');
+    _masterKml = KmlService.buildPawIconsKml(species, iconHref: 'http://$host:81/images/paw.png');
 
-    await _writeRemoteFile('/var/www/html/kml/master.kml', kml);
-    await _forceRefreshScreen(1);
+    await _writeRemoteFile('/var/www/html/kml/master.kml', _masterKml,);
+    await _reloadMaster();
+    print('LG Master markers updated: ${species.length}');
   }
 
   // ── Camera sync: phone map move → rig flies too ─────────────────
@@ -226,11 +246,24 @@ class LGService {
     required double tilt,
     required double heading,
   }) async {
-    final kml = KmlService.buildFlyTo(lat: lat, lng: lng, range: range, tilt: tilt, heading: heading);
-    await _writeRemoteFile('/var/www/html/kml/flyTo.kml', kml);
-    for (int i = 1; i <= screens; i++) {
-      await _sendToScreen(i, 'http://$host:81/kml/flyTo.kml');
-    }
+    print(
+      '[LG] Updating MASTER camera: '
+      'lat=$lat lng=$lng range=$range tilt=$tilt heading=$heading',
+    );
+
+    final kml = KmlService.buildMasterKml(
+      species: vietnamSpecies, 
+      iconHref: 'http://$host:81/images/paw.png', 
+      lat:lat, 
+      lng: lng, 
+      range: range, 
+      tilt: tilt, 
+      heading: heading
+      );
+    await _writeRemoteFile('/var/www/html/kml/master.kml', kml);
+    print('LG master.kml updated');
+    
+    await _reloadMaster();
   }
 
   // ── Tap a pin on the phone → rig flies + shows info balloon ─────
