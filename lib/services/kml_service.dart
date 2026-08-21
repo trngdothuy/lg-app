@@ -122,13 +122,22 @@ class KmlService {
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 <Document>
-<LookAt>
-  <longitude>$lng</longitude>
-  <latitude>$lat</latitude>
-  <range>$range</range>
-  <tilt>$tilt</tilt>
-  <heading>$heading</heading>
-</LookAt>
+<name>Fly to species</name>
+    <gx:duration>0.5</gx:duration>
+		<gx:flyToMode>smooth</gx:flyToMode>
+    <Placemark>
+      <name>Species</name>
+      <LookAt>
+        <longitude>$lng</longitude>
+        <latitude>$lat</latitude>
+        <range>$range</range>
+        <tilt>$tilt</tilt>
+        <heading>$heading</heading>
+      </LookAt>
+      <Point>
+        <coordinates>$lng,$lat,$tilt</coordinates>
+      </Point>
+    </Placemark>
 </Document>
 </kml>''';
   }
@@ -179,23 +188,23 @@ class KmlService {
 
   static String _infoHtml(Species s, SpeciesStory story, String heading, String? imageUrl) {
     final imageTag = imageUrl != null
-        ? '<img src="$imageUrl" style="width:100%;border-radius:8px;margin-bottom:8px;">'
+        ? '<img src="$imageUrl" style="width:100%;border-radius:12px;margin-bottom:2vh;">'
         : '';
     
     final body = (story.highlights != null && story.highlights!.isNotEmpty)
         ? _renderHighlights(story.highlights!)
-        : '<div style="line-height:1.5;">${story.narrative}</div>';
+        : '<div style="line-height:1.6;font-size:clamp(14px,2.2vw;26px);">${story.narrative}</div>';
     
     return '''
-<div style="font-family:Arial;max-width:340px;background:#0E1B25;
-            color:white;padding:16px;border-radius:8px;">
+<div style="font-family:Arial;width:90vw;max-width:900px;background:#0E1B25;
+            color:white;padding:3vw;border-radius:1.5vw;box-sizing:border-box;">
   $imageTag
-  <h2 style="margin:0 0 4px 0;">${_escape(s.commonName)}</h2>
-  <div style="font-style:italic;opacity:.7;margin-bottom:8px;">
+  <h2 style="margin:0 0 1vh 0;font-size:clamp(18px,4vw,42px);">${_escape(s.commonName)}</h2>
+  <div style="font-style:italic;opacity:.7;margin-bottom:2vh;font-size:clamp(12px,2.2vw,22px);">
     ${_escape(s.scientificName)}
   </div>
   <div style="font-weight:bold;color:${s.category == "CR" ? "#EF5350" : "#FFA726"};
-              margin-bottom:10px;">
+              margin-bottom:2vh;font-size:clamp(14px,2.8vw,28px);">
     $heading
   </div>
   $body
@@ -226,7 +235,7 @@ class KmlService {
     final items = highlights.map((h) {
       final color = _highlightColors[h['type']] ?? '#FFFFFF';
       return '''
-      <li style="margin-bottom:8px;line-height:1.4;">
+      <li style="margin-bottom:1.5vh;line-height:1.5;font-size:clamp(14px,2.2vw,24px);">
         <span style="color:$color;font-weight:bold;">•</span>
         ${_escape(h['text'] ?? '')} 
       </li>''';

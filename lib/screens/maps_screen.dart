@@ -317,7 +317,7 @@ class _MapsScreenState extends State<MapsScreen> {
     );
 
     // Fire-and-forget: fly LG immediately
-    _lg?.flyTo(lat: species.lat, lng: species.lng, range: 1, tilt: 45);
+    _lg?.flyTo(lat: species.lat, lng: species.lng, range: 15000, tilt: 45);
 
     // Pipeline: IUCN → Gemini → LG + TTS
     try {

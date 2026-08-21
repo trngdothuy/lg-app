@@ -163,7 +163,7 @@ class LGService {
 
     // CENTER / MASTER ONLY
     await _writeRemoteFile(
-      '/var/www/html/kml/slave_1.kml',
+      '/var/www/html/kml/master.kml',
       kml,
     );
     await _forceRefreshScreen(1);
@@ -174,7 +174,7 @@ class LGService {
   Future<void> updateMarkers(List<Species> species) async {
     final kml = KmlService.buildPawIconsKml(species, iconHref: 'http://$host:81/images/paw.png');
 
-    await _writeRemoteFile('/var/www/html/kml/slave_1.kml', kml);
+    await _writeRemoteFile('/var/www/html/kml/master.kml', kml);
     await _forceRefreshScreen(1);
   }
 
