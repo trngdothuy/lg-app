@@ -342,13 +342,6 @@ class _ToolsScreenState extends State<ToolsScreen> {
                 ),
               ),
             // ),
-
-            // ── Dark mode toggle (bottom-left, above nav bar) ─────────
-        // Positioned(
-        //   bottom: 72,
-        //   left: 16,
-        //   child: DarkModeToggle(),
-        // ),
           ],
         ),
       ),

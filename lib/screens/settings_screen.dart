@@ -225,12 +225,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
 
       if (mounted) {
-        // setState(() {
-        //   _isConnected = true;
-        //   _client = client;
-        //   _isConnecting = false;
-        // });
-
         setState(() {
           _client = client;
           _isConnected = true;
